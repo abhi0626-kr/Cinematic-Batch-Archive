@@ -1,0 +1,20 @@
+[
+  {
+    "id": "seed-1",
+    "message": "I still remember the smell of the old library on rainy Tuesdays. We thought those nights would last forever.",
+    "author": "CLARA D., CLASS OF '22",
+    "createdAt": "2026-01-18T09:00:00.000Z"
+  },
+  {
+    "id": "seed-2",
+    "message": "To the group that always sat at the corner table in the cafe: thank you for being my soundtrack in sophomore year.",
+    "author": "MARCUS W., CLASS OF '23",
+    "createdAt": "2026-02-10T15:30:00.000Z"
+  },
+  {
+    "id": "seed-3",
+    "message": "We arrived as strangers and left with an entire language made of inside jokes and impossible deadlines.",
+    "author": "NIA O., CLASS OF '24",
+    "createdAt": "2026-03-02T18:10:00.000Z"
+  }
+]

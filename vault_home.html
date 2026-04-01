@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>THE VAULT | Cinematic College Memory Archive</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,700;1,6..72,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary": "#b2cbcd",
+                        "on-secondary-fixed": "#061f21",
+                        "outline-variant": "#3e4949",
+                        "on-primary-container": "#005a5e",
+                        "on-secondary": "#1d3436",
+                        "surface-dim": "#07151c",
+                        "surface-container-highest": "#29373e",
+                        "surface-container-high": "#1e2c33",
+                        "secondary-fixed-dim": "#b2cbcd",
+                        "primary-container": "#6fd3d8",
+                        "surface-container": "#142129",
+                        "primary-fixed": "#8ff2f7",
+                        "on-tertiary-container": "#794408",
+                        "surface-container-lowest": "#031017",
+                        "outline": "#879393",
+                        "tertiary": "#ffd9bb",
+                        "tertiary-container": "#ffb471",
+                        "primary-fixed-dim": "#72d6db",
+                        "surface-tint": "#72d6db",
+                        "secondary-fixed": "#cee7e9",
+                        "on-primary-fixed-variant": "#004f52",
+                        "inverse-primary": "#00696d",
+                        "secondary-container": "#334b4d",
+                        "tertiary-fixed": "#ffdcc1",
+                        "background": "#07151c",
+                        "on-error": "#690005",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-container": "#a1babc",
+                        "surface-container-low": "#0f1d25",
+                        "on-primary": "#003739",
+                        "inverse-on-surface": "#25323a",
+                        "tertiary-fixed-dim": "#ffb778",
+                        "surface-bright": "#2d3b43",
+                        "primary": "#8ceff4",
+                        "error": "#ffb4ab",
+                        "on-tertiary-fixed": "#2e1500",
+                        "error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#6c3a00",
+                        "on-primary-fixed": "#002021",
+                        "surface": "#07151c",
+                        "on-surface": "#d6e5ef",
+                        "on-background": "#d6e5ef",
+                        "inverse-surface": "#d6e5ef",
+                        "on-tertiary": "#4c2700",
+                        "on-surface-variant": "#bdc9c9",
+                        "on-secondary-fixed-variant": "#334b4d",
+                        "surface-variant": "#29373e"
+                    },
+                    fontFamily: {
+                        "headline": ["Newsreader", "serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #07151c;
+            color: #d6e5ef;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            perspective: 1500px;
+        }
+        .text-glow {
+            text-shadow: 0 0 15px rgba(140, 239, 244, 0.4);
+        }
+
+        /* 3D Scroll Effects */
+        .reveal-3d {
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
+            transform-style: preserve-3d;
+            will-change: transform, opacity;
+        }
+
+        .scroll-tilt {
+            transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(var(--depth, 0px));
+        }
+
+        /* Initial states for reveal */
+        .reveal-left { transform: translateX(-50px) translateZ(-100px) rotateY(10deg); opacity: 0; }
+        .reveal-right { transform: translateX(50px) translateZ(-100px) rotateY(-10deg); opacity: 0; }
+        .reveal-up { transform: translateY(50px) translateZ(-50px) rotateX(-5deg); opacity: 0; }
+        
+        .is-visible { transform: translate(0) rotate(0) translateZ(0); opacity: 1; }
+
+        /* Smoother Parallax */
+        .parallax-layer {
+            transition: transform 0.1s linear;
+        }
+    </style>
+</head>
+<body class="selection:bg-primary/30">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#07151c]/60 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(140,239,244,0.08)]">
+<div class="flex justify-between items-center px-12 py-6 w-full max-w-none">
+<div class="text-2xl font-headline italic tracking-tighter text-[#8ceff4]">THE VAULT</div>
+<div class="hidden md:flex items-center space-x-10">
+<a class="text-[0.6875rem] font-medium tracking-wider uppercase text-[#8ceff4] border-b border-[#8ceff4]/30 pb-1" href="#">Home</a>
+<a class="text-[0.6875rem] font-medium tracking-wider uppercase text-[#b2cbcd] hover:text-[#8ceff4] transition-colors duration-300" href="#">Directory</a>
+<a class="text-[0.6875rem] font-medium tracking-wider uppercase text-[#b2cbcd] hover:text-[#8ceff4] transition-colors duration-300" href="#">Gallery</a>
+<a class="text-[0.6875rem] font-medium tracking-wider uppercase text-[#b2cbcd] hover:text-[#8ceff4] transition-colors duration-300" href="#">Story</a>
+<a class="text-[0.6875rem] font-medium tracking-wider uppercase text-[#b2cbcd] hover:text-[#8ceff4] transition-colors duration-300" href="#">Guestbook</a>
+</div>
+<div class="flex items-center text-[#8ceff4]">
+<span class="material-symbols-outlined cursor-pointer text-2xl" data-icon="account_circle">account_circle</span>
+</div>
+</div>
+</nav>
+<!-- Hero Section -->
+<header class="relative h-screen w-full flex items-center justify-center overflow-hidden" style="perspective: 1000px;">
+<div class="absolute inset-0 z-0 parallax-layer" id="hero-bg">
+<img alt="College campus blur" class="w-full h-full object-cover filter blur-sm brightness-[0.3]" data-alt="Dreamy wide shot of historic university stone buildings and green lawns under a moody twilight sky with soft cinematic grain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAW6CrmDZA_2sthnugE_PuMATNrCZ7ePlbwWxJHtpjIWMlbIwBBqOPK_NhsyYDWkoI2D6f4EW2SULRbNY6y4MjpwZhsO5T1DCW7p75IAwwFz52cw0E9waforrpk1pvNviBDd3lAzJkyrM7nQiqHQ51yrR77YOaLjgR456U1hmNUMsjL3IwuFwzKmw7Wq3qWsdJWBgxHB2jFSG9IdT90L1V1D4rqOFt56f1f_Wv5eh-WXvU8Ox1af-IddGoLoBM6r8FitOFXLp43x7E"/>
+<div class="absolute inset-0 bg-gradient-to-b from-[#07151c]/20 via-[#07151c]/40 to-[#07151c]"></div>
+</div>
+<div class="relative z-10 text-center px-6 max-w-4xl reveal-3d" id="hero-content">
+<h1 class="font-headline text-5xl md:text-8xl text-on-surface mb-8 tracking-tight leading-tight">
+                Our Journey, <br/>
+<span class="italic font-normal text-primary text-glow">Our Memories</span>
+</h1>
+<div class="flex flex-col md:flex-row items-center justify-center gap-6 mt-12">
+<button class="px-10 py-4 bg-transparent border border-primary/50 text-primary hover:bg-primary/10 hover:shadow-[0_0_20px_rgba(140,239,244,0.3)] transition-all duration-500 text-sm font-medium tracking-widest uppercase">
+                    Enter the Vault
+                </button>
+<button class="px-10 py-4 bg-transparent border border-outline/30 text-secondary hover:text-on-surface transition-all duration-500 text-sm font-medium tracking-widest uppercase">
+                    The Real Story
+                </button>
+</div>
+</div>
+<div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-secondary/40">
+<span class="text-[10px] tracking-[0.3em] uppercase">Scroll</span>
+<span class="material-symbols-outlined animate-bounce" data-icon="expand_more">expand_more</span>
+</div>
+</header>
+<!-- Timeline Preview -->
+<section class="py-32 px-6 bg-surface relative overflow-hidden section-container">
+<div class="max-w-6xl mx-auto">
+<div class="text-center mb-24 reveal-3d reveal-up">
+<span class="text-primary font-label text-[10px] tracking-[0.4em] uppercase mb-4 block">Chronology</span>
+<h2 class="font-headline text-4xl md:text-5xl">The Four-Year Arc</h2>
+</div>
+<div class="relative">
+<!-- Vertical Line -->
+<div class="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-[1px] bg-outline-variant/30"></div>
+<!-- Event 1 (Left) -->
+<div class="relative flex justify-start items-center mb-32 group reveal-3d reveal-left">
+<div class="w-full md:w-1/2 pr-0 md:pr-16 text-right">
+<div class="bg-surface-container-low p-8 shadow-2xl transition-all duration-500 hover:scale-[1.05] border-r-2 border-primary/0 hover:border-primary/40 scroll-tilt" style="--depth: 20px;">
+<span class="font-label text-primary/60 text-xs mb-2 block tracking-widest">FALL 2020</span>
+<h3 class="font-headline text-2xl mb-4 italic text-on-surface">The Quiet Arrival</h3>
+<p class="text-secondary text-sm leading-relaxed font-body">Empty hallways and digital greetings. We began our journey in a world that felt still, finding warmth in screens and small distanced circles.</p>
+</div>
+</div>
+<div class="absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-primary rounded-full shadow-[0_0_10px_rgba(140,239,244,0.8)]"></div>
+</div>
+<!-- Event 2 (Right) -->
+<div class="relative flex justify-end items-center mb-32 group reveal-3d reveal-right">
+<div class="w-full md:w-1/2 pl-0 md:pl-16 text-left">
+<div class="bg-surface-container-low p-8 shadow-2xl transition-all duration-500 hover:scale-[1.05] border-l-2 border-primary/0 hover:border-primary/40 scroll-tilt" style="--depth: 20px;">
+<span class="font-label text-primary/60 text-xs mb-2 block tracking-widest">SPRING 2022</span>
+<h3 class="font-headline text-2xl mb-4 italic text-on-surface">The Great Awakening</h3>
+<p class="text-secondary text-sm leading-relaxed font-body">The campus breathed again. Festivals, late-night diner runs, and the roar of the crowd at the stadium. We discovered what we'd been missing.</p>
+</div>
+</div>
+<div class="absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-primary rounded-full shadow-[0_0_10px_rgba(140,239,244,0.8)]"></div>
+</div>
+<!-- Event 3 (Left) -->
+<div class="relative flex justify-start items-center group reveal-3d reveal-left">
+<div class="w-full md:w-1/2 pr-0 md:pr-16 text-right">
+<div class="bg-surface-container-low p-8 shadow-2xl transition-all duration-500 hover:scale-[1.05] border-r-2 border-primary/0 hover:border-primary/40 scroll-tilt" style="--depth: 20px;">
+<span class="font-label text-primary/60 text-xs mb-2 block tracking-widest">SUMMER 2024</span>
+<h3 class="font-headline text-2xl mb-4 italic text-on-surface">The Final Bow</h3>
+<p class="text-secondary text-sm leading-relaxed font-body">Caps in the air, tears in the library. A thousand days compressed into a single afternoon, leaving behind a legacy locked within these walls.</p>
+</div>
+</div>
+<div class="absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-primary rounded-full shadow-[0_0_10px_rgba(140,239,244,0.8)]"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Gallery Preview -->
+<section class="py-32 bg-surface-container-low section-container overflow-hidden">
+<div class="px-12 mb-16 flex flex-col md:flex-row justify-between items-end gap-6 reveal-3d reveal-up">
+<div class="max-w-xl">
+<span class="text-primary font-label text-[10px] tracking-[0.4em] uppercase mb-4 block">Visual Archive</span>
+<h2 class="font-headline text-4xl md:text-5xl">Fragments of Time</h2>
+</div>
+<button class="text-xs font-label tracking-widest uppercase border-b border-outline/30 pb-2 text-secondary hover:text-primary transition-colors">
+                View Full Gallery
+            </button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 px-12">
+<!-- Grid Item 1 -->
+<div class="aspect-[4/5] overflow-hidden group relative cursor-crosshair reveal-3d reveal-up" style="transition-delay: 100ms;">
+<img alt="Campus Life" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-100 group-hover:scale-110 scroll-tilt" data-alt="Group of diverse students laughing together in a sun-drenched library aisle with dust motes dancing in light beams" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJpzDYG0SqLwD1JuEi8M1mnA4WITdCK9RkVxNO2udV84ZkYsMNWHIiG3RLIGKCiobq-w5w19otrU88mikIT0sRvzD6NznHBxUj7eMzjOXYwwhhWm_lj5wKkXL4WGmXwQdZi8kFyqfxw6mps_ytKIOnj_nJlvd7tfIXEx1QujpkKzzIIsja0UQhAgaZ1CQPqZDqS8kOpaqG3WmR2nRz0IYwHVJVDGshww4ylA3kk7DqukXtkYZCO43I8zkUQAgCLkYfC4qPnD4kQ1Y"/>
+<div class="absolute inset-0 border-[0px] group-hover:border-[12px] border-primary/20 transition-all duration-500"></div>
+<div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-surface/80 backdrop-blur-md p-4">
+<p class="text-[10px] uppercase tracking-widest font-label">The Library Sessions</p>
+</div>
+</div>
+<!-- Grid Item 2 -->
+<div class="aspect-[4/5] overflow-hidden group relative cursor-crosshair md:translate-y-12 reveal-3d reveal-up" style="transition-delay: 200ms;">
+<img alt="Concert" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-100 group-hover:scale-110 scroll-tilt" data-alt="Candid shot of a crowded campus music festival at night with blue and cyan stage lights reflecting on faces" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEaqwpX5cr7OQDryCP5lv1SM3wjJNA5BcpRgdInGsuoCdr0WfvnD1xzQkUQmEn3TJdi9atMdPaD1IYWtOCVhqP5wnLnVVv0RAP2DXUCSh-EF1UttnWfw_Mr-YhqHfHbGsNMcWBGvCTBs-TBGn-xRZukRkCVehECA7MRRK3lbSa3fUbJtjaw20iB6mWNergR-iqGovfRZHGhy0NRY8tsDx_dednEq1eoz64uJNTA2j-gKO-F4lllWEX6dBoo3XrrxjSqetVlZahcCs"/>
+<div class="absolute inset-0 border-[0px] group-hover:border-[12px] border-primary/20 transition-all duration-500"></div>
+<div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-surface/80 backdrop-blur-md p-4">
+<p class="text-[10px] uppercase tracking-widest font-label">Midnight Echoes</p>
+</div>
+</div>
+<!-- Grid Item 3 -->
+<div class="aspect-[4/5] overflow-hidden group relative cursor-crosshair reveal-3d reveal-up" style="transition-delay: 300ms;">
+<img alt="Architecture" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-100 group-hover:scale-110 scroll-tilt" data-alt="Low angle shot of ivy-covered university stone walls under a misty morning light with high contrast and depth" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDbueIJI2Z7UDtGlowgAqJBSFp7u0DhE1pSALTdzU81K08PrmUS2rqyNZcLmv6iJEu1iUumBHqcVvK0Rruj4QGY_DwYzCv20wW1-3bohjpiEcsp4bUWYNRq9GosRTaqhS8Mi54psfc3HxobV3xZL4Ui2rpPYBubkkNvq1-GMqNeKakKZXCtkfjhVVgBazZ_b1fB_zsQvYHcF0UJAI1uidTKOhy1EofIi3SSjC43N7-tFP8w-3FD1zYbz4ZkZbQoKwT8tTfG8v1RwU"/>
+<div class="absolute inset-0 border-[0px] group-hover:border-[12px] border-primary/20 transition-all duration-500"></div>
+<div class="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-surface/80 backdrop-blur-md p-4">
+<p class="text-[10px] uppercase tracking-widest font-label">Ivy &amp; Stone</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Faces Preview -->
+<section class="py-32 bg-surface section-container overflow-hidden">
+<div class="max-w-7xl mx-auto px-6 text-center">
+<h2 class="font-headline text-4xl mb-16 italic reveal-3d reveal-up">The Architects of the Era</h2>
+<div class="flex flex-wrap justify-center gap-12 md:gap-16">
+<!-- Faces with different Z-depths for 3D effect -->
+<div class="group cursor-pointer reveal-3d reveal-up" style="--depth: 10px;">
+<div class="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden mb-4 ring-offset-4 ring-offset-surface ring-0 group-hover:ring-2 ring-primary transition-all duration-500 shadow-[0_0_20px_rgba(140,239,244,0)] group-hover:shadow-[0_0_20px_rgba(140,239,244,0.4)]">
+<img alt="Student" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjovSsZFzU2NqxHvjx-n6tyCVKwVHJHrWFJZOvAXKGsFh3Y4xcC24Q-wy6Ky5NTFkC0dTBs7a3MztdNzn5S-abLMCvrhvabCALd9YXasxQKYpWaLKtvrpJKwTixh6mYPWKfA5r80trjjL7fVRXYx_plFnvaR-3b5ax-7jWtVrQfe8bgMaMsUUbg_-pRHsCi_sKI9HqjpAY2_FKhJ3O3DEGuB6EE73cZxGTplCj5rqoigx22RzjbZDQRrK90JX0WS3g4rHwl6qjAfI"/>
+</div>
+<p class="font-label text-[10px] tracking-widest uppercase text-secondary">A. Vance</p>
+</div>
+<div class="group cursor-pointer reveal-3d reveal-up" style="--depth: 40px; transition-delay: 100ms;">
+<div class="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden mb-4 ring-offset-4 ring-offset-surface ring-0 group-hover:ring-2 ring-primary transition-all duration-500 shadow-[0_0_20px_rgba(140,239,244,0)] group-hover:shadow-[0_0_20px_rgba(140,239,244,0.4)]">
+<img alt="Student" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCT2YuwResTq24mzTBaTwooVilNnMkP6a_bbqSDgUoVS3F6sxzRn7UwvplK8ExyMZg-ixKfbXBul_Sq7BQaGpYOgYb52NODEHlNSVKXsAAP8nr_nar7y6tJWGLhAza9UjpciVpVe4AglPUZ-K3GzaA1Oq9ftB4tBCbX2Wz8zKOm0gE3pN9jydfCW8zYjMrvoZcXRv34q1WeXxSQvez_xQsbpUVbLTinON__Fm5Il7s-u2bIJ3t2OA9XkN3sJqLvT2kfo5TDC6NEdKE"/>
+</div>
+<p class="font-label text-[10px] tracking-widest uppercase text-secondary">M. Chen</p>
+</div>
+<div class="group cursor-pointer reveal-3d reveal-up" style="--depth: 20px; transition-delay: 200ms;">
+<div class="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden mb-4 ring-offset-4 ring-offset-surface ring-0 group-hover:ring-2 ring-primary transition-all duration-500 shadow-[0_0_20px_rgba(140,239,244,0)] group-hover:shadow-[0_0_20px_rgba(140,239,244,0.4)]">
+<img alt="Student" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZ4Ks4NEYlzdriikb_0EqWA4u2nUEhByW7dieFP3PG8FS1fJieS_0UHt1wKmE2J8GowpmeFtr292YiPXeiE2OBAGbIyAt6fOVr_b8Ie6XT3XmE57x-Yi0BF5XQiqJOjRwNvuwgd9O9XsIvUJ5e-Kiggp4_-t0j6DbYFpXL3aDKuM9dmt3qyw0-SYVzHw9wX7pRuniEC9HlwGSJ3-lpBeuCNe9Iy4YQn1RYMy6DSSYMKw-TgDIBvxhXaLx9QoJikAgR5GZmBzGantg"/>
+</div>
+<p class="font-label text-[10px] tracking-widest uppercase text-secondary">J. Thorne</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Guestbook Preview -->
+<section class="py-32 px-6 bg-surface-container-lowest relative overflow-hidden section-container">
+<div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-20">
+<!-- Form Side -->
+<div class="flex-1 reveal-3d reveal-left">
+<h2 class="font-headline text-4xl mb-8">Leave a Trace</h2>
+<form class="space-y-8">
+<div class="relative group">
+<input class="w-full bg-transparent border-0 border-b border-outline-variant py-4 focus:ring-0 focus:border-primary transition-all duration-500 placeholder:text-secondary/30 text-on-surface" placeholder="Name" type="text"/>
+</div>
+<div class="relative group">
+<textarea class="w-full bg-transparent border-0 border-b border-outline-variant py-4 focus:ring-0 focus:border-primary transition-all duration-500 placeholder:text-secondary/30 text-on-surface resize-none" placeholder="Your memory..." rows="4"></textarea>
+</div>
+<button class="w-full py-4 border border-outline/30 text-secondary text-xs tracking-widest uppercase hover:text-on-surface hover:border-primary/50 transition-all duration-500">
+                        Sign the Guestbook
+                    </button>
+</form>
+</div>
+<!-- Messages Side -->
+<div class="flex-1 space-y-12">
+<div class="bg-surface-container p-8 shadow-xl reveal-3d reveal-right scroll-tilt" style="--depth: 30px;">
+<span class="material-symbols-outlined text-primary/30 text-4xl block mb-4" data-icon="format_quote">format_quote</span>
+<p class="font-headline italic text-lg text-on-surface leading-relaxed mb-6">"I still remember the smell of the old library on rainy Tuesdays. We thought those nights would last forever."</p>
+<p class="font-label text-[10px] tracking-widest uppercase text-primary">— CLARA D., CLASS OF '22</p>
+</div>
+<div class="bg-surface-container p-8 shadow-xl translate-x-4 md:translate-x-12 reveal-3d reveal-right scroll-tilt" style="--depth: 50px; transition-delay: 200ms;">
+<span class="material-symbols-outlined text-primary/30 text-4xl block mb-4" data-icon="format_quote">format_quote</span>
+<p class="font-headline italic text-lg text-on-surface leading-relaxed mb-6">"To the group that always sat at the corner table in the cafe: thank you for being the soundtrack to my sophomore year."</p>
+<p class="font-label text-[10px] tracking-widest uppercase text-primary">— MARCUS W., CLASS OF '23</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="w-full py-16 bg-[#07151c] border-t border-[#879393]/10">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 w-full max-w-7xl mx-auto">
+<div class="text-lg font-headline text-[#8ceff4] opacity-50 mb-8 md:mb-0">THE VAULT</div>
+<div class="flex flex-col items-center md:items-end gap-4">
+<div class="flex gap-8 mb-4">
+<a class="text-[10px] uppercase tracking-[0.2em] font-light text-[#b2cbcd] hover:text-[#ffd9bb] transition-colors duration-500" href="#">Privacy</a>
+<a class="text-[10px] uppercase tracking-[0.2em] font-light text-[#b2cbcd] hover:text-[#ffd9bb] transition-colors duration-500" href="#">Terms</a>
+<a class="text-[10px] uppercase tracking-[0.2em] font-light text-[#b2cbcd] hover:text-[#ffd9bb] transition-colors duration-500" href="#">Archive Policy</a>
+</div>
+<p class="text-[10px] uppercase tracking-[0.2em] font-light text-[#b2cbcd]">© THE VAULT CINEMATIC ARCHIVE. ALL MEMORIES RESERVED.</p>
+</div>
+</div>
+</footer>
+<script>
+        // Intersection Observer for 3D Reveal
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal-3d').forEach(el => revealObserver.observe(el));
+
+        // Scroll-based Parallax and 3D Tilt
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            
+            // Hero Parallax
+            const heroBg = document.getElementById('hero-bg');
+            const heroContent = document.getElementById('hero-content');
+            if (heroBg) heroBg.style.transform = `translateY(${scrolled * 0.4}px)`;
+            if (heroContent) {
+                const rotation = Math.min(scrolled * 0.05, 15);
+                heroContent.style.transform = `translateY(${scrolled * 0.2}px) rotateX(${rotation}deg)`;
+            }
+
+            // Section Tiliting Logic
+            document.querySelectorAll('.section-container').forEach(section => {
+                const rect = section.getBoundingClientRect();
+                const windowHeight = window.innerHeight;
+                
+                // Calculate position relative to center of screen
+                const centerOffset = (rect.top + rect.height / 2) - windowHeight / 2;
+                const tiltIntensity = centerOffset * 0.01; // subtle tilt based on scroll position
+
+                section.querySelectorAll('.scroll-tilt').forEach(el => {
+                    const depth = el.style.getPropertyValue('--depth') || '0px';
+                    // Tilt X based on vertical position
+                    el.style.setProperty('--tilt-x', `${tiltIntensity * -0.5}deg`);
+                    // Subtle hover/movement feel
+                    el.style.transform = `rotateX(var(--tilt-x)) translateZ(${depth})`;
+                });
+            });
+        });
+
+        // Mouse move parallax for extra depth on interactive elements
+        document.querySelectorAll('.scroll-tilt').forEach(el => {
+            el.addEventListener('mousemove', (e) => {
+                const rect = el.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const xc = rect.width / 2;
+                const yc = rect.height / 2;
+                const dx = x - xc;
+                const dy = y - yc;
+                
+                el.style.setProperty('--tilt-x', `${dy / -10}deg`);
+                el.style.setProperty('--tilt-y', `${dx / 10}deg`);
+            });
+
+            el.addEventListener('mouseleave', () => {
+                el.style.setProperty('--tilt-y', '0deg');
+            });
+        });
+    </script>
+</body></html>

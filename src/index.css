@@ -1,0 +1,140 @@
+:root {
+  /* Tokens from Design System */
+  --surface: #07151c;
+  --surface-container-low: #0f1d25;
+  --surface-container-highest: #29373e;
+  --surface-bright: #2d3b43;
+  --primary: #8ceff4;
+  --primary-container: #6fd3d8;
+  --secondary: #b2cbcd;
+  --tertiary: #ffd9bb;
+  --outline: #879393;
+  --outline-variant: #3e4949;
+
+  /* Typography */
+  --font-display: 'Newsreader', serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--surface);
+  color: #fff;
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  margin: 0;
+}
+
+.text-primary { color: var(--primary); }
+.text-secondary { color: var(--secondary); }
+.text-tertiary { color: var(--tertiary); }
+
+.bg-surface-low { background-color: var(--surface-container-low); }
+.bg-surface-top { background-color: var(--surface-container-highest); }
+.bg-surface-bright { background-color: var(--surface-bright); }
+
+/* The Layering Principle (No Lines, ambient shadows) */
+.glass-panel {
+  background: rgba(41, 55, 62, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 10px 40px rgba(140, 239, 244, 0.08); /* Glow shadow */
+}
+
+/* Button variants */
+.btn-primary {
+  background: transparent;
+  border: 1px solid rgba(135, 147, 147, 0.5); /* outline at 50% opacity */
+  color: var(--secondary);
+  height: 3.5rem;
+  padding: 0 2rem;
+  border-radius: 0.25rem;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary:hover {
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 15px rgba(140, 239, 244, 0.3);
+}
+
+.btn-icon {
+  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-container-low);
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-icon:hover {
+  box-shadow: 0 0 20px rgba(140, 239, 244, 0.4);
+  border: 2px solid var(--primary);
+}
+
+.input-field {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--outline-variant);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.5rem 0;
+  width: 100%;
+  transition: border-color 0.3s ease;
+}
+
+.input-field:focus {
+  outline: none;
+  border-bottom-color: var(--primary);
+}
+
+.italic-anchor {
+  font-style: italic;
+  color: var(--primary-container);
+}
+
+/* 3D Scroll Effects */
+.reveal-3d {
+    transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
+    transform-style: preserve-3d;
+    will-change: transform, opacity;
+}
+
+.scroll-tilt {
+    transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(var(--depth, 0px));
+}
+
+/* Initial states for reveal */
+.reveal-left { transform: translateX(-50px) translateZ(-100px) rotateY(10deg); opacity: 0; }
+.reveal-right { transform: translateX(50px) translateZ(-100px) rotateY(-10deg); opacity: 0; }
+.reveal-up { transform: translateY(50px) translateZ(-50px) rotateX(-5deg); opacity: 0; }
+
+.is-visible { transform: translate(0) rotate(0) translateZ(0); opacity: 1; }
+
+/* Smoother Parallax */
+.parallax-layer {
+    transition: transform 0.1s linear;
+}
