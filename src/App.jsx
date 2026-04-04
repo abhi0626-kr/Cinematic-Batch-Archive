@@ -1,5 +1,10 @@
 import React, { Component, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import directorySeedData from '../data/directory.json';
+import { ImageHover } from './components/ui/image-reveal';
+import { ZoomParallax } from './components/ui/zoom-parallax';
 import './index.css';
 
 const PAGES = ['home', 'directory', 'gallery', 'story', 'guestbook'];
@@ -14,6 +19,19 @@ const PAGE_LABELS = {
 
 const GUESTBOOK_API_BASE = '/api/guestbook';
 
+const firebaseConfig = {
+  apiKey: 'AIzaSyCeU1YI9SlIFCPbHehcjNP5_HjELBsbflA',
+  authDomain: 'cinematic-batch-archive.firebaseapp.com',
+  projectId: 'cinematic-batch-archive',
+  storageBucket: 'cinematic-batch-archive.appspot.com',
+  messagingSenderId: '922855483454',
+  appId: '1:922855483454:web:ef9cfebcf729e544f3096f',
+  measurementId: 'G-45T5D5DY8C',
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const firestoreDb = getFirestore(firebaseApp);
+
 const pageTransition = {
   initial: { opacity: 0, x: 26 },
   animate: { opacity: 1, x: 0 },
@@ -27,6 +45,12 @@ const DIRECTORY_FILTERS = [
   { key: 'class-a', label: 'Class-A' },
   { key: 'class-b', label: 'Class-B' },
   { key: 'faculty', label: 'Faculty' },
+];
+
+const SOCIAL_LINK_META = [
+  { key: 'instagram', label: 'Instagram', icon: 'photo_camera' },
+  { key: 'linkedin', label: 'LinkedIn', icon: 'business_center' },
+  { key: 'github', label: 'GitHub', icon: 'code' },
 ];
 
 function getPageFromHash() {
@@ -241,6 +265,155 @@ function parseDirectoryQuery() {
   };
 }
 
+function normalizeDirectoryEntries(payload) {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (Array.isArray(payload?.entries)) {
+    return payload.entries;
+  }
+
+  if (payload && typeof payload === 'object') {
+    const values = Object.values(payload).filter((item) => item && typeof item === 'object');
+    if (values.length) {
+      return values;
+    }
+  }
+
+  return [];
+}
+
+function normalizeImageSrc(src) {
+  if (!src) {
+    return '';
+  }
+
+  if (/^https?:\/\//i.test(src)) {
+    return src;
+  }
+
+  return encodeURI(src);
+}
+
+function normalizeExternalUrl(url) {
+  const raw = String(url || '').trim();
+  if (!raw) {
+    return '';
+  }
+
+  const candidate = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+
+  try {
+    const parsed = new URL(candidate);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return parsed.toString();
+    }
+  } catch {
+    return '';
+  }
+
+  return '';
+}
+
+function getProfileRollKey(profile) {
+  return String(profile?.roll || profile?.id || '').trim();
+}
+
+function mergeProfileSources(seedProfile, liveProfile) {
+  if (!seedProfile && !liveProfile) {
+    return null;
+  }
+
+  if (!seedProfile) {
+    return liveProfile;
+  }
+
+  if (!liveProfile) {
+    return seedProfile;
+  }
+
+  return {
+    ...seedProfile,
+    ...liveProfile,
+    socials: {
+      ...(seedProfile.socials || {}),
+      ...(liveProfile.socials || {}),
+    },
+    instagram: liveProfile.instagram || seedProfile.instagram,
+    linkedin: liveProfile.linkedin || seedProfile.linkedin,
+    github: liveProfile.github || seedProfile.github,
+  };
+}
+
+function sortPeopleByNameThenRoll(people) {
+  const collator = new Intl.Collator(undefined, {
+    sensitivity: 'base',
+    numeric: true,
+  });
+
+  return [...people].sort((a, b) => {
+    const nameA = (a?.name || '').trim();
+    const nameB = (b?.name || '').trim();
+    const byName = collator.compare(nameA, nameB);
+
+    if (byName !== 0) {
+      return byName;
+    }
+
+    return collator.compare((a?.roll || '').trim(), (b?.roll || '').trim());
+  });
+}
+
+function countAvailableSocialLinks(profile) {
+  if (!profile || typeof profile !== 'object') {
+    return 0;
+  }
+
+  return SOCIAL_LINK_META.reduce((count, item) => {
+    const candidate = profile[item.key] || profile.socials?.[item.key];
+    return candidate ? count + 1 : count;
+  }, 0);
+}
+
+function dedupeProfilesByRoll(entries) {
+  const map = new Map();
+
+  entries.forEach((entry) => {
+    const roll = String(entry?.roll || '').trim() || String(entry?.id || '').trim();
+    if (!roll) {
+      return;
+    }
+
+    const current = map.get(roll);
+    if (!current) {
+      map.set(roll, entry);
+      return;
+    }
+
+    const currentSocialScore = countAvailableSocialLinks(current);
+    const nextSocialScore = countAvailableSocialLinks(entry);
+
+    if (nextSocialScore > currentSocialScore) {
+      map.set(roll, entry);
+      return;
+    }
+
+    if (nextSocialScore < currentSocialScore) {
+      return;
+    }
+
+    const currentCreatedAt = Date.parse(current?.createdAt || '') || 0;
+    const nextCreatedAt = Date.parse(entry?.createdAt || '') || 0;
+
+    if (nextCreatedAt > currentCreatedAt) {
+      map.set(roll, entry);
+    }
+  });
+
+  return Array.from(map.values());
+}
+
 function MainApp() {
   const [activePage, setActivePage] = useState(getPageFromHash());
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -405,41 +578,42 @@ function HomePage({ onNavigate }) {
   return (
     <>
       <header id="home-hero" data-section="Hero" className="relative h-[92vh] w-full flex items-center justify-center overflow-hidden" style={{ perspective: '1000px' }}>
-        <div data-hero-bg className="absolute inset-0 z-0 parallax-layer">
-          <img
-            alt="College campus blur"
-            className="w-full h-full object-cover filter blur-sm brightness-[0.3]"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAW6CrmDZA_2sthnugE_PuMATNrCZ7ePlbwWxJHtpjIWMlbIwBBqOPK_NhsyYDWkoI2D6f4EW2SULRbNY6y4MjpwZhsO5T1DCW7p75IAwwFz52cw0E9waforrpk1pvNviBDd3lAzJkyrM7nQiqHQ51yrR77YOaLjgR456U1hmNUMsjL3IwuFwzKmw7Wq3qWsdJWBgxHB2jFSG9IdT90L1V1D4rqOFt56f1f_Wv5eh-WXvU8Ox1af-IddGoLoBM6r8FitOFXLp43x7E"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#07151c]/20 via-[#07151c]/45 to-[#07151c]" />
-        </div>
+        <ImageHover
+          imageSrc="/assets/Hero.png"
+          imageAlt="Campus facade"
+          className="absolute inset-0 z-0 parallax-layer"
+          imageClassName="absolute inset-0 h-full w-full object-cover filter blur-[1px] brightness-[0.48]"
+          overlayClassName="absolute inset-0 h-full w-full bg-[#02070a]/85 backdrop-blur-[4px] transition-all duration-300 pointer-events-none"
+        >
+          <div data-hero-bg className="absolute inset-0 bg-gradient-to-b from-[#07151c]/25 via-[#07151c]/50 to-[#07151c]" />
 
-        <div data-hero-content className="relative z-10 text-center px-6 max-w-4xl reveal-3d reveal-up">
-          <h1 className="font-headline text-5xl md:text-8xl mb-8 tracking-tight leading-tight">
-            Our Journey,
-            <br />
-            <span className="italic font-normal text-[#8ceff4] drop-shadow-[0_0_15px_rgba(140,239,244,0.4)]">Our Memories</span>
-          </h1>
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6 mt-12">
-            <button
-              className="px-10 py-4 bg-transparent border border-[#8ceff4]/50 text-[#8ceff4] hover:bg-[#8ceff4]/10 hover:shadow-[0_0_20px_rgba(140,239,244,0.3)] transition-all duration-500 text-sm font-medium tracking-widest uppercase"
-              onClick={() => onNavigate('story')}
-            >
-              Read The Story
-            </button>
-            <button
-              className="px-10 py-4 bg-transparent border border-[#879393]/30 text-[#b2cbcd] hover:text-[#d6e5ef] transition-all duration-500 text-sm font-medium tracking-widest uppercase"
-              onClick={() => onNavigate('gallery')}
-            >
-              Open Gallery
-            </button>
+          <div data-hero-content className="relative z-10 text-center px-6 max-w-4xl reveal-3d reveal-up h-full mx-auto flex flex-col items-center justify-center">
+            <h1 className="font-headline text-5xl md:text-8xl mb-8 tracking-tight leading-tight">
+              Our Journey,
+              <br />
+              <span className="italic font-normal text-[#8ceff4] drop-shadow-[0_0_15px_rgba(140,239,244,0.4)]">Our Memories</span>
+            </h1>
+            <div className="flex flex-col md:flex-row items-center justify-center gap-6 mt-12">
+              <button
+                className="px-10 py-4 bg-transparent border border-[#8ceff4]/50 text-[#8ceff4] hover:bg-[#8ceff4]/10 hover:shadow-[0_0_20px_rgba(140,239,244,0.3)] transition-all duration-500 text-sm font-medium tracking-widest uppercase"
+                onClick={() => onNavigate('story')}
+              >
+                Read The Story
+              </button>
+              <button
+                className="px-10 py-4 bg-transparent border border-[#879393]/30 text-[#b2cbcd] hover:text-[#d6e5ef] transition-all duration-500 text-sm font-medium tracking-widest uppercase"
+                onClick={() => onNavigate('gallery')}
+              >
+                Open Gallery
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[#b2cbcd]/50">
-          <span className="text-[10px] tracking-[0.3em] uppercase">Scroll</span>
-          <span className="material-symbols-outlined animate-bounce">expand_more</span>
-        </div>
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[#b2cbcd]/50 z-10">
+            <span className="text-[10px] tracking-[0.3em] uppercase">Scroll</span>
+            <span className="material-symbols-outlined animate-bounce">expand_more</span>
+          </div>
+        </ImageHover>
       </header>
 
       <section id="home-links" data-section="Portals" className="py-24 px-6 section-container">
@@ -460,10 +634,32 @@ function DirectoryPage() {
 
   // Fetch directory people from backend API
   useEffect(() => {
-    fetch('/api/directory')
-      .then(res => res.json())
-      .then(data => setDirectoryPeople(Array.isArray(data.entries) ? data.entries : []))
-      .catch(() => setDirectoryPeople([]));
+    const loadFromFirestore = async () => {
+      try {
+        const snapshot = await getDocs(collection(firestoreDb, 'directory'));
+        const liveEntries = snapshot.docs.map((record) => ({
+          id: record.id,
+          ...record.data(),
+        }));
+        const seedEntries = Array.isArray(directorySeedData) ? directorySeedData : [];
+        const seedByRoll = new Map(seedEntries.map((profile) => [getProfileRollKey(profile), profile]));
+        const mergedEntries = liveEntries.map((profile) => mergeProfileSources(seedByRoll.get(getProfileRollKey(profile)), profile));
+        seedEntries.forEach((profile) => {
+          const rollKey = getProfileRollKey(profile);
+          if (!mergedEntries.some((item) => getProfileRollKey(item) === rollKey)) {
+            mergedEntries.push(profile);
+          }
+        });
+
+        const dedupedEntries = dedupeProfilesByRoll(mergedEntries.filter(Boolean));
+        setDirectoryPeople(sortPeopleByNameThenRoll(dedupedEntries));
+      } catch {
+        const seedEntries = Array.isArray(directorySeedData) ? directorySeedData : [];
+        setDirectoryPeople(sortPeopleByNameThenRoll(dedupeProfilesByRoll(seedEntries)));
+      }
+    };
+
+    loadFromFirestore();
   }, []);
 
   // Sync state to URL query params for bookmarking
@@ -500,7 +696,7 @@ function DirectoryPage() {
     const timeout = window.setTimeout(revealProfiles, 100);
     
     return () => window.clearTimeout(timeout);
-  }, [activeFilter, searchTerm, selectedProfile]);
+  }, [activeFilter, searchTerm, selectedProfile, directoryPeople.length]);
 
   const filteredPeople = useMemo(() => {
     return directoryPeople.filter((person) => {
@@ -533,6 +729,10 @@ function DirectoryPage() {
           return false;
       }
     });
+  }, [activeFilter, searchTerm, directoryPeople]);
+
+  const sortedFilteredPeople = useMemo(() => {
+    return sortPeopleByNameThenRoll(filteredPeople);
   }, [activeFilter, searchTerm, directoryPeople]);
 
   return (
@@ -572,11 +772,11 @@ function DirectoryPage() {
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-y-14 gap-x-8">
-              {filteredPeople.map((person, index) => (
+              {sortedFilteredPeople.map((person, index) => (
                 <DirectoryProfile key={person.roll} {...person} delay={(index % 5) * 90} onClick={() => setSelectedProfile(person)} />
               ))}
             </div>
-            {filteredPeople.length === 0 && (
+            {sortedFilteredPeople.length === 0 && (
               <p className="text-center text-sm tracking-[0.15em] uppercase text-[#879393] mt-10">No records match your filters.</p>
             )}
           </>
@@ -587,16 +787,49 @@ function DirectoryPage() {
 }
 // GalleryPage is a visually-driven section that showcases a curated collection of photos and captions from the college years. It features a dynamic grid layout with staggered reveal animations, creating an immersive browsing experience. Each gallery item includes a brief description or memory associated with the image, adding context and emotional resonance to the visuals.
 function GalleryPage() {
+  const zoomImages = [
+    {
+      src: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
+      alt: 'Modern architecture building',
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
+      alt: 'Urban cityscape at sunset',
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=800&h=800&fit=crop&crop=entropy&auto=format&q=80',
+      alt: 'Abstract geometric pattern',
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
+      alt: 'Mountain landscape',
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=800&fit=crop&crop=entropy&auto=format&q=80',
+      alt: 'Minimalist design elements',
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
+      alt: 'Ocean waves and beach',
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
+      alt: 'Forest trees and sunlight',
+    },
+  ];
+
   return (
-    <section id="gallery-grid" data-section="Gallery" className="py-16 section-container">
-      <div className="px-6 md:px-12">
-        <PageTitle eyebrow="Gallery" title="Fragments of Time" description="Moments stitched together from four unforgettable years." />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {galleryItems.map((item, index) => (
-            <GalleryItem key={item.label} img={item.img} label={item.label} className={index % 2 ? 'md:translate-y-10' : ''} delay={`${index * 120}ms`} />
-          ))}
+    <section id="gallery-grid" data-section="Gallery" className="section-container overflow-hidden">
+      <main className="min-h-screen w-full">
+        <div className="px-6 md:px-12 pt-10">
+          <PageTitle
+            eyebrow="Gallery"
+            title="Fragments of Time"
+            description="Moments stitched together from four unforgettable years."
+          />
         </div>
-      </div>
+        <ZoomParallax images={zoomImages} />
+      </main>
     </section>
   );
 }
@@ -834,10 +1067,12 @@ function FaceItem({ img, name, delay, depth }) {
 }
 
 function DirectoryProfile({ img, name, roll, delay, onClick, imgPosition }) {
+  const imgSrc = normalizeImageSrc(img);
+
   return (
     <button type="button" onClick={onClick} className="group cursor-pointer reveal-3d reveal-up flex flex-col items-center text-center" style={{ transitionDelay: `${delay}ms` }}>
       <div className="w-28 h-28 md:w-36 md:h-36 mb-5 rounded-[1.25rem] overflow-hidden bg-[#0f1d25] border border-[#3e4949]/30 group-hover:border-[#8ceff4]/60 transition-all duration-500 shadow-xl group-hover:shadow-[0_10px_30px_rgba(140,239,244,0.15)] group-hover:-translate-y-2">
-        <img alt={name} src={img} className="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 hover:scale-105" style={{ objectPosition: imgPosition || 'center top' }} />
+        <img alt={name} src={imgSrc} className="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 hover:scale-105" style={{ objectPosition: imgPosition || 'center top' }} />
       </div>
       <h4 className="font-headline text-xl text-[#d6e5ef] mb-1 group-hover:text-[#8ceff4] transition-colors">{name}</h4>
       <p className="font-label text-[9px] tracking-[0.2em] font-bold uppercase text-[#879393]">{roll}</p>
@@ -846,8 +1081,15 @@ function DirectoryProfile({ img, name, roll, delay, onClick, imgPosition }) {
 }
 
 function DirectoryProfileDetail({ profile, onBack }) {
-  const coverSrc = profile.img;
+  const coverSrc = normalizeImageSrc(profile.img);
   const coverPosition = profile.imgPosition || 'center 20%';
+  const curatorNote =
+    profile.note ||
+    `${profile.name}'s dossier reflects growth, discipline, and a unique contribution to the ${profile.department} chapter of this archive. These fragments preserve both achievement and memory.`;
+  const socialLinks = SOCIAL_LINK_META.map((item) => ({
+    ...item,
+    href: normalizeExternalUrl(profile[item.key] || profile.socials?.[item.key]),
+  })).filter((link) => Boolean(link.href));
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -909,13 +1151,31 @@ function DirectoryProfileDetail({ profile, onBack }) {
 
           <div>
             <p className="text-[10px] tracking-[0.22em] uppercase text-[#ffd9bb] mb-6">Curator's Note</p>
-            <p className="text-[#d6e5ef] text-lg leading-relaxed">
-              {profile.name}'s dossier reflects growth, discipline, and a unique contribution to the {profile.department} chapter of this archive.
-              These fragments preserve both achievement and memory.
-            </p>
-            <button type="button" className="mt-8 px-6 py-3 border border-[#879393]/40 text-[10px] tracking-[0.22em] uppercase text-[#d6e5ef] hover:border-[#8ceff4]/60 transition-colors">
+            <p className="text-[#d6e5ef] text-lg leading-relaxed">{curatorNote}</p>
+            {socialLinks.length > 0 && (
+              <div className="mt-8">
+                <p className="text-[10px] tracking-[0.18em] uppercase text-[#879393] mb-3">Social Links</p>
+                <div className="flex flex-wrap gap-3">
+                  {socialLinks.map((link) => (
+                    <a
+                      key={link.key}
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 border border-[#879393]/40 text-[10px] tracking-[0.16em] uppercase text-[#d6e5ef] hover:border-[#8ceff4]/60 hover:text-[#8ceff4] transition-colors inline-flex items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-[14px] leading-none" aria-hidden="true">
+                        {link.icon}
+                      </span>
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* <button type="button" className="mt-8 px-6 py-3 border border-[#879393]/40 text-[10px] tracking-[0.22em] uppercase text-[#d6e5ef] hover:border-[#8ceff4]/60 transition-colors">
               Download Full Dossier
-            </button>
+            </button> */}
           </div>
         </div>
       </section>
@@ -957,7 +1217,7 @@ const galleryItems = [
 
 
 // DirectoryPage is a comprehensive section that serves as an index of all individuals associated with the college experience. It features a searchable and filterable directory of profiles, allowing users to explore classmates, faculty, and staff. Each profile includes a photo, name, roll number, department, batch, and a brief curator's note. The design emphasizes accessibility and ease of navigation, with reveal animations to enhance the browsing experience.
-const directoryPeople = [
+const directorySeedPeople = [
   {
     img: '/assets/Abhishek KR.jpeg',
     imgPosition: 'center 16%',

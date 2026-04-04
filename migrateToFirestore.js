@@ -1,7 +1,14 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, setDoc, doc } from "firebase/firestore";
 import fs from "fs";
-const directory = JSON.parse(fs.readFileSync("./data/directory.json", "utf-8"));
+
+function readJsonFile(path) {
+  const raw = fs.readFileSync(path, "utf-8");
+  const cleaned = raw.replace(/^\uFEFF/, "");
+  return JSON.parse(cleaned);
+}
+
+const directory = readJsonFile("./data/directory.json");
 
 const firebaseConfig = {
   apiKey: "AIzaSyCeU1YI9SlIFCPbHehcjNP5_HjELBsbflA",
