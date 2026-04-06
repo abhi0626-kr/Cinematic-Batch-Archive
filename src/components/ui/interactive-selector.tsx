@@ -5,10 +5,12 @@ interface Option {
   title: string;
   description?: string;
   image: string;
+  fit?: 'cover' | 'contain';
+  position?: string;
 }
 
 interface InteractiveSelectorProps {
-  images: { src: string; alt?: string }[];
+  images: { src: string; alt?: string; fit?: 'cover' | 'contain'; position?: string }[];
 }
 
 const InteractiveSelector = ({ images }: InteractiveSelectorProps) => {
@@ -21,6 +23,8 @@ const InteractiveSelector = ({ images }: InteractiveSelectorProps) => {
     title: `Image ${idx + 1}`,
     description: `Gallery item ${idx + 1}`,
     image: img.src,
+    fit: img.fit,
+    position: img.position,
   }));
 
   const handleOptionClick = (index: number) => {
@@ -76,8 +80,8 @@ const InteractiveSelector = ({ images }: InteractiveSelectorProps) => {
               `}
               style={{
                 backgroundImage: `url('${option.image}')`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
+                backgroundSize: option.fit || 'cover',
+                backgroundPosition: option.position || 'center',
                 backfaceVisibility: 'hidden',
                 opacity: animatedOptions.includes(index) ? 1 : 0,
                 transform: animatedOptions.includes(index) ? 'translateY(0)' : 'translateY(18px)',

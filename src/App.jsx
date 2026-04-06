@@ -1,5 +1,5 @@
-import React, { Component, useEffect, useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import React, { Component, useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, useInView, useScroll, useSpring, useTransform } from 'framer-motion';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import directorySeedData from '../data/directory.json';
@@ -15,6 +15,14 @@ const PAGE_LABELS = {
   gallery: 'Gallery',
   story: 'Story',
   guestbook: 'Guestbook',
+};
+
+const MOBILE_PAGE_ICONS = {
+  home: 'home',
+  directory: 'badge',
+  gallery: 'photo_library',
+  story: 'history_edu',
+  guestbook: 'edit_note',
 };
 
 const GUESTBOOK_API_BASE = '/api/guestbook';
@@ -39,12 +47,12 @@ const pageTransition = {
 };
 
 const DIRECTORY_FILTERS = [
-  { key: 'all', label: 'All Students' },
-  { key: 'boyz', label: 'Boyz' },
-  { key: 'girls', label: 'Girls' },
-  { key: 'class-a', label: 'Class-A' },
-  { key: 'class-b', label: 'Class-B' },
-  { key: 'faculty', label: 'Faculty' },
+  { key: 'all', label: 'All Students', icon: 'groups' },
+  { key: 'boyz', label: 'Boyz', icon: 'man' },
+  { key: 'girls', label: 'Girls', icon: 'woman' },
+  { key: 'class-a', label: 'Class-A', icon: 'counter_1' },
+  { key: 'class-b', label: 'Class-B', icon: 'counter_2' },
+  { key: 'faculty', label: 'Faculty', icon: 'co_present' },
 ];
 
 const SOCIAL_LINK_META = [
@@ -480,8 +488,25 @@ function MainApp() {
 }
 
 function TopNav({ activePage, onNavigate, mobileNavOpen, setMobileNavOpen }) {
+  const mobileAngles = [180, 160, 140, 120, 100];
+  const radialDistance = 98;
+
+  const handleMobileNavigate = (page) => {
+    onNavigate(page);
+    setMobileNavOpen(false);
+  };
+
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#07151c]/65 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(140,239,244,0.08)] border-b border-[#8ceff4]/10">
+      {mobileNavOpen ? (
+        <button
+          type="button"
+          aria-label="Close mobile menu"
+          className="md:hidden fixed inset-0 bg-[#031017]/45 backdrop-blur-[1px]"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      ) : null}
+
       <div className="flex justify-between items-center px-5 md:px-12 py-5 w-full">
         <button className="text-xl md:text-2xl font-headline italic tracking-tight text-[#8ceff4]" onClick={() => onNavigate('home')}>
           THE VAULT
@@ -503,26 +528,59 @@ function TopNav({ activePage, onNavigate, mobileNavOpen, setMobileNavOpen }) {
           ))}
         </div>
 
-        <button className="md:hidden text-[#8ceff4]" onClick={() => setMobileNavOpen((open) => !open)}>
-          <span className="material-symbols-outlined">menu</span>
-        </button>
-      </div>
+        <div className="md:hidden relative z-[60] h-10 w-10">
+          {PAGES.map((page, index) => {
+            const angleInRadians = (mobileAngles[index] * Math.PI) / 180;
+            const x = Math.cos(angleInRadians) * radialDistance;
+            const y = Math.sin(angleInRadians) * radialDistance;
 
-      {mobileNavOpen && (
-        <div className="md:hidden px-5 pb-5 flex flex-col gap-3 border-t border-[#8ceff4]/10 bg-[#07151c]/95">
-          {PAGES.map((page) => (
-            <button
-              key={page}
-              className={`text-left text-xs tracking-[0.2em] uppercase py-2 ${
-                activePage === page ? 'text-[#8ceff4]' : 'text-[#b2cbcd]'
-              }`}
-              onClick={() => onNavigate(page)}
-            >
-              {PAGE_LABELS[page]}
-            </button>
-          ))}
+            return (
+              <button
+                key={`mobile-${page}`}
+                type="button"
+                aria-label={PAGE_LABELS[page]}
+                title={PAGE_LABELS[page]}
+                onClick={() => handleMobileNavigate(page)}
+                className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-10 w-10 rounded-full border text-[#d6e5ef] shadow-[0_8px_25px_rgba(0,0,0,0.28)] transition-all duration-500 ${
+                  activePage === page
+                    ? 'border-[#8ceff4] bg-[#8ceff4]/15'
+                    : 'border-[#8ceff4]/30 bg-[#0d212b]/95 hover:border-[#8ceff4]/65'
+                }`}
+                style={{
+                  opacity: mobileNavOpen ? 1 : 0,
+                  transform: mobileNavOpen
+                    ? `translate(-50%, -50%) translate3d(${x}px, ${y}px, 0) scale(1)`
+                    : 'translate(-50%, -50%) translate3d(0, 0, 0) scale(0.45)',
+                  pointerEvents: mobileNavOpen ? 'auto' : 'none',
+                  transitionDelay: mobileNavOpen ? `${index * 60}ms` : '0ms',
+                }}
+              >
+                <span className="material-symbols-outlined text-[18px] leading-none">{MOBILE_PAGE_ICONS[page]}</span>
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+            onClick={() => setMobileNavOpen((open) => !open)}
+            className="relative h-10 w-10 rounded-full border border-[#8ceff4]/50 bg-[#07151c]/95 shadow-[0_6px_18px_rgba(0,0,0,0.3)]"
+          >
+            <span
+              className="absolute left-1/2 top-1/2 h-[2px] w-5 -translate-x-1/2 bg-[#8ceff4] transition-transform duration-300"
+              style={{ transform: mobileNavOpen ? 'translate(-50%, -50%) rotate(45deg)' : 'translate(-50%, calc(-50% - 6px)) rotate(0deg)' }}
+            />
+            <span
+              className="absolute left-1/2 top-1/2 h-[2px] w-5 -translate-x-1/2 bg-[#8ceff4] transition-all duration-300"
+              style={{ opacity: mobileNavOpen ? 0 : 1, transform: mobileNavOpen ? 'translate(-50%, -50%) scaleX(0.2)' : 'translate(-50%, -50%) scaleX(1)' }}
+            />
+            <span
+              className="absolute left-1/2 top-1/2 h-[2px] w-5 -translate-x-1/2 bg-[#8ceff4] transition-transform duration-300"
+              style={{ transform: mobileNavOpen ? 'translate(-50%, -50%) rotate(-45deg)' : 'translate(-50%, calc(-50% + 6px)) rotate(0deg)' }}
+            />
+          </button>
         </div>
-      )}
+      </div>
     </nav>
   );
 }
@@ -754,18 +812,23 @@ function DirectoryPage() {
                   className="w-full bg-[#0a151b] border border-transparent text-[#d6e5ef] pl-12 pr-4 py-4 rounded text-sm placeholder:text-[#879393] focus:outline-none focus:ring-1 focus:ring-[#8ceff4] transition-all"
                 />
               </div>
-              <div className="flex flex-wrap gap-3 justify-center xl:justify-end">
+              <div className="w-full xl:w-auto flex flex-nowrap md:flex-wrap gap-2 md:gap-3 justify-start md:justify-center xl:justify-end overflow-x-auto md:overflow-visible pb-1 md:pb-0">
                 {DIRECTORY_FILTERS.map((filter) => (
                   <button
                     key={filter.key}
                     onClick={() => setActiveFilter(filter.key)}
-                    className={`px-5 py-2.5 text-[9px] tracking-[0.15em] uppercase rounded-sm border transition-colors ${
+                    aria-label={filter.label}
+                    title={filter.label}
+                    className={`shrink-0 px-3 md:px-5 py-2.5 text-[9px] tracking-[0.15em] uppercase rounded-sm border transition-colors inline-flex items-center justify-center gap-1.5 ${
                       activeFilter === filter.key
                         ? 'text-[#8ceff4] border-[#8ceff4] bg-[#8ceff4]/5'
                         : 'text-[#b2cbcd] border-[#3e4949] hover:border-[#879393] hover:text-[#d6e5ef]'
                     }`}
                   >
-                    {filter.label}
+                    <span className="material-symbols-outlined text-[16px] md:hidden leading-none" aria-hidden="true">
+                      {filter.icon}
+                    </span>
+                    <span className="hidden md:inline">{filter.label}</span>
                   </button>
                 ))}
               </div>
@@ -789,32 +852,46 @@ function DirectoryPage() {
 function GalleryPage() {
   const zoomImages = [
     {
-      src: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
-      alt: 'Modern architecture building',
+      src: '/assets/Group 0.png',
+      alt: 'Group 0',
     },
     {
-      src: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
-      alt: 'Urban cityscape at sunset',
+      src: '/assets/Group 1.jpeg',
+      alt: 'Group 1',
     },
     {
-      src: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=800&h=800&fit=crop&crop=entropy&auto=format&q=80',
-      alt: 'Abstract geometric pattern',
+      src: '/assets/Group 2.jpeg',
+      alt: 'Group 2',
     },
     {
-      src: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
-      alt: 'Mountain landscape',
+      src: '/assets/Group 3.jpeg',
+      alt: 'Group 3',
     },
     {
-      src: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=800&fit=crop&crop=entropy&auto=format&q=80',
-      alt: 'Minimalist design elements',
+      src: '/assets/Group 4.jpeg',
+      alt: 'Group 4',
     },
     {
-      src: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
-      alt: 'Ocean waves and beach',
+      src: '/assets/Group 5.jpeg',
+      alt: 'Group 5',
     },
     {
-      src: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
-      alt: 'Forest trees and sunlight',
+      src: '/assets/Group 6.png',
+      alt: 'Group 6',
+      fit: 'contain',
+      position: 'center top',
+    },
+    {
+      src: '/assets/Group 7.jpeg',
+      alt: 'Group 7',
+    },
+    {
+      src: '/assets/Group 8.jpeg',
+      alt: 'Group 8',
+    },
+    {
+      src: '/assets/Group 9.jpeg',
+      alt: 'Group 9',
     },
   ];
 
@@ -839,14 +916,8 @@ function StoryPage() {
     <>
       <section id="story-timeline" data-section="Timeline" className="py-16 px-6 section-container">
         <div className="max-w-6xl mx-auto">
-         <PageTitle eyebrow="Story" title="The Three-Year Arc" description="From mid-2023 to mid-2026, this is the narrative spine of the class." />
-            <div className="relative mt-14">
-            <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-[1px] bg-[#3e4949]/30" />
-            <TimelineEvent align="left" delay="0ms" term="FALL 2023" title="The Quiet Arrival" desc="We stepped into a new world together, nervous yet hopeful. The first semester set the foundation of friendships that would last forever." />
-            <TimelineEvent align="right" delay="180ms" term="SPRING 2024" title="The Great Awakening" desc="The campus came alive with festivals, late-night study sessions, and shared achievements. We found our rhythm together." />
-            <TimelineEvent align="left" delay="360ms" term="SUMMER 2025" title="The Peak Experience" desc="Growth, challenges overcome, and memories that shaped who we became. These were the unforgettable days." />
-            <TimelineEvent align="right" delay="540ms" term="SPRING 2026" title="The Final Bow" desc="Graduation day arrived in a blur of caps, gowns, and tears. We walked out different, bonded by four years that changed everything." />
-          </div>
+          <PageTitle eyebrow="Story" title="The Three-Year Arc" description="From mid-2023 to mid-2026, this is the narrative spine of the class." />
+          <Timeline items={storyTimelineEvents} />
         </div>
       </section>
 
@@ -1026,19 +1097,120 @@ function VaultFooter() {
   );
 }
 
-function TimelineEvent({ align, term, title, desc, delay }) {
-  const isLeft = align === 'left';
-  const revealClass = isLeft ? 'reveal-left' : 'reveal-right';
+function Timeline({ items }) {
+  const timelineRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: timelineRef,
+    offset: ['start 75%', 'end 20%'],
+  });
+
+  const progressScale = useSpring(scrollYProgress, {
+    stiffness: 120,
+    damping: 24,
+    mass: 0.25,
+  });
+
+  const leadingEdgeY = useTransform(scrollYProgress, [0, 1], ['0%', '100%']);
+
   return (
-    <div className={`relative flex ${isLeft ? 'justify-start' : 'justify-end'} items-center mb-32 group reveal-3d ${revealClass}`} style={{ transitionDelay: delay }}>
-      <div className={`w-full md:w-1/2 ${isLeft ? 'pr-0 md:pr-16 text-right' : 'pl-0 md:pl-16 text-left'}`}>
-        <div className={`bg-[#0f1d25] p-8 shadow-2xl transition-all duration-500 hover:scale-[1.05] border-[#8ceff4]/0 hover:border-[#8ceff4]/40 scroll-tilt ${isLeft ? 'border-r-2' : 'border-l-2'}`} style={{ '--depth': '20px' }}>
-          <span className="font-label text-[#8ceff4]/60 text-xs mb-2 block tracking-widest">{term}</span>
-          <h3 className="font-headline text-2xl mb-4 italic text-[#d6e5ef]">{title}</h3>
-          <p className="text-[#b2cbcd] text-sm leading-relaxed font-body">{desc}</p>
-        </div>
+    <div ref={timelineRef} className="relative mt-14">
+      <TimelineSpine progressScale={progressScale} leadingEdgeY={leadingEdgeY} />
+      <div className="space-y-12 md:space-y-24">
+        {items.map((item, index) => (
+          <TimelineItem key={item.term} item={item} side={index % 2 === 0 ? 'left' : 'right'} />
+        ))}
       </div>
-      <div className="absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-[#8ceff4] rounded-full shadow-[0_0_10px_rgba(140,239,244,0.8)]" />
+    </div>
+  );
+}
+
+function TimelineSpine({ progressScale, leadingEdgeY }) {
+  return (
+    <div className="absolute left-1/2 top-0 bottom-0 w-[2px] -translate-x-1/2 pointer-events-none">
+      <div className="absolute inset-0 rounded-full bg-gradient-to-b from-[#78d9ff]/25 via-[#4fc9f5]/30 to-[#1f8ec4]/20" />
+      <motion.div
+        className="absolute inset-0 origin-top rounded-full bg-gradient-to-b from-[#9de8ff] via-[#69ddff] to-[#33c1ff]"
+        style={{ scaleY: progressScale, boxShadow: '0 0 20px rgba(110, 228, 255, 0.75)' }}
+      />
+      <motion.div
+        className="absolute left-1/2 h-4 w-6 -translate-x-1/2 rounded-full bg-[#a6ecff]/90 blur-[6px]"
+        style={{ top: leadingEdgeY }}
+      />
+    </div>
+  );
+}
+
+function TimelineItem({ item, side }) {
+  const isLeft = side === 'left';
+  const itemRef = useRef(null);
+  const hasAutoFlipped = useRef(false);
+  const inView = useInView(itemRef, { amount: 0.4, once: false });
+  const [autoFlipActive, setAutoFlipActive] = useState(false);
+
+  useEffect(() => {
+    if (!inView || hasAutoFlipped.current) {
+      return undefined;
+    }
+
+    const isTouchOrMobile = window.matchMedia('(hover: none), (pointer: coarse), (max-width: 768px)').matches;
+    if (!isTouchOrMobile) {
+      return undefined;
+    }
+
+    hasAutoFlipped.current = true;
+    setAutoFlipActive(true);
+
+    const timer = window.setTimeout(() => {
+      setAutoFlipActive(false);
+    }, 1300);
+
+    return () => window.clearTimeout(timer);
+  }, [inView]);
+
+  return (
+    <div ref={itemRef} className={`relative flex items-center px-1 md:px-0 ${isLeft ? 'md:justify-start' : 'md:justify-end'}`}>
+      <motion.div
+        initial={{ opacity: 0, x: isLeft ? -50 : 50, y: 20 }}
+        whileInView={{ opacity: 1, x: 0, y: 0 }}
+        viewport={{ amount: 0.35, once: true }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        className={`w-full md:w-[46%] ${isLeft ? 'md:pr-16 text-left md:text-right' : 'md:pl-16 text-left'}`}
+      >
+        <article className="story-flip-card">
+          <div className={`story-flip-content ${autoFlipActive ? 'story-flip-content--auto' : ''}`}>
+            <div className="story-flip-face story-flip-front">
+              <p className="text-[10px] md:text-[11px] uppercase tracking-[0.22em] text-[#8ceff4] mb-2 md:mb-3">{item.term}</p>
+              <h3 className="font-headline text-xl sm:text-2xl md:text-3xl text-[#d6e5ef] leading-tight mb-3 md:mb-4">{item.title}</h3>
+              <p className="text-[#b2cbcd] text-[0.95rem] md:text-base leading-relaxed">{item.desc}</p>
+            </div>
+            <div className="story-flip-face story-flip-back" style={{ backgroundImage: `url(${item.image})` }}>
+              <div className="story-flip-overlay">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-[#8ceff4] mb-2">Memory Frame</p>
+                <h4 className="font-headline text-2xl text-[#e6f7ff]">{item.title}</h4>
+              </div>
+            </div>
+          </div>
+        </article>
+      </motion.div>
+
+      <motion.div
+        className="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+        animate={
+          inView
+            ? {
+                scale: [1, 1.22, 1],
+                boxShadow: [
+                  '0 0 0 rgba(140,239,244,0)',
+                  '0 0 24px rgba(140,239,244,0.9)',
+                  '0 0 12px rgba(140,239,244,0.45)',
+                ],
+              }
+            : { scale: 1, boxShadow: '0 0 0 rgba(140,239,244,0)' }
+        }
+        transition={{ duration: 1.4, repeat: inView ? Infinity : 0, ease: 'easeInOut' }}
+      >
+        <span className="block h-4 w-4 rounded-full bg-[#8ceff4] border border-[#d7f9ff]" />
+      </motion.div>
     </div>
   );
 }
@@ -1105,9 +1277,14 @@ function DirectoryProfileDetail({ profile, onBack }) {
         <button
           type="button"
           onClick={onBack}
-          className="px-4 py-2 border border-[#879393]/40 text-[#b2cbcd] text-xs tracking-[0.2em] uppercase hover:border-[#8ceff4]/60 hover:text-[#d6e5ef] transition-colors"
+          aria-label="Back to Directory"
+          title="Back to Directory"
+          className="px-2.5 md:px-4 py-2 border border-[#879393]/40 text-[#b2cbcd] text-xs tracking-[0.2em] uppercase hover:border-[#8ceff4]/60 hover:text-[#d6e5ef] transition-colors inline-flex items-center justify-center gap-1.5"
         >
-          Back to Directory
+          <span className="material-symbols-outlined text-[18px] leading-none md:hidden" aria-hidden="true">
+            arrow_back
+          </span>
+          <span className="hidden md:inline">Back to Directory</span>
         </button>
       </div>
 
@@ -1714,6 +1891,33 @@ const storyHighlights = [
   },
 ];
 
+const storyTimelineEvents = [
+  {
+    term: 'FALL 2023',
+    title: 'The Quiet Arrival',
+    desc: 'We stepped into a new world together, nervous yet hopeful. The first semester quietly built friendships that would anchor everything after.',
+    image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1400&auto=format&fit=crop',
+  },
+  {
+    term: 'SPRING 2024',
+    title: 'The Great Awakening',
+    desc: 'Campus life found its pulse through festivals, late-night prep, and shared wins. Confidence grew when routines turned into momentum.',
+    image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1400&auto=format&fit=crop',
+  },
+  {
+    term: 'SUMMER 2025',
+    title: 'The Peak Experience',
+    desc: 'Big challenges sharpened us. Projects, leadership, and setbacks taught resilience and gave the batch its defining identity.',
+    image: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?q=80&w=1400&auto=format&fit=crop',
+  },
+  {
+    term: 'SPRING 2026',
+    title: 'The Final Bow',
+    desc: 'Graduation arrived in a blur of gratitude and goodbyes. We left carrying memories, lessons, and bonds that still feel close.',
+    image: 'https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?q=80&w=1400&auto=format&fit=crop',
+  },
+];
+
 const seedGuestbookEntries = [
   {
     id: 'seed-1',
@@ -1735,10 +1939,41 @@ const seedGuestbookEntries = [
   },
 ];
 
-export default function App() {
+function StartupLoader({ isFading }) {
   return (
-    <ErrorBoundary>
-      <MainApp />
-    </ErrorBoundary>
+    <div className={`startup-loader ${isFading ? 'startup-loader--fade' : ''}`} aria-live="polite" aria-label="Loading website">
+      <p className="startup-loader__kicker">THE VAULT ARCHIVE</p>
+      <p className="startup-loader__text">
+        <span>Loading Memories</span>
+      </p>
+      <div className="startup-loader__pulse" aria-hidden="true" />
+    </div>
+  );
+}
+
+export default function App() {
+  const [showLoader, setShowLoader] = useState(true);
+  const [isLoaderFading, setIsLoaderFading] = useState(false);
+
+  useEffect(() => {
+    const LOADER_TOTAL_MS = 5000;
+    const LOADER_FADE_MS = 700;
+
+    const fadeTimer = window.setTimeout(() => setIsLoaderFading(true), LOADER_TOTAL_MS - LOADER_FADE_MS);
+    const hideTimer = window.setTimeout(() => setShowLoader(false), LOADER_TOTAL_MS);
+
+    return () => {
+      window.clearTimeout(fadeTimer);
+      window.clearTimeout(hideTimer);
+    };
+  }, []);
+
+  return (
+    <>
+      <ErrorBoundary>
+        <MainApp />
+      </ErrorBoundary>
+      {showLoader ? <StartupLoader isFading={isLoaderFading} /> : null}
+    </>
   );
 }

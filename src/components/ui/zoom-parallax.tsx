@@ -7,6 +7,8 @@ import InteractiveSelector from './interactive-selector';
 interface Image {
   src: string;
   alt?: string;
+  fit?: 'cover' | 'contain';
+  position?: string;
 }
 
 interface ZoomParallaxProps {
@@ -45,7 +47,7 @@ export function ZoomParallax({ images }: ZoomParallaxProps) {
       {/* Desktop parallax intro (hidden on mobile) */}
       <div ref={container} className="hidden md:block relative h-[280vh]">
         <div className="sticky top-0 h-screen overflow-hidden">
-          {images.map(({ src, alt }, index) => {
+          {images.map(({ src, alt, fit, position }, index) => {
             const scale = scales[index % scales.length];
 
             return (
@@ -58,7 +60,8 @@ export function ZoomParallax({ images }: ZoomParallaxProps) {
                   <img
                     src={src || '/placeholder.svg'}
                     alt={alt || `Parallax image ${index + 1}`}
-                    className="h-full w-full object-cover rounded-lg"
+                    className="h-full w-full rounded-lg"
+                    style={{ objectFit: fit || 'cover', objectPosition: position || 'center' }}
                   />
                 </div>
               </motion.div>
@@ -74,7 +77,7 @@ export function ZoomParallax({ images }: ZoomParallaxProps) {
 
       {/* Sequential full-screen section (desktop only) */}
       <div className="hidden md:block relative snap-y snap-mandatory">
-        {images.map(({ src, alt }, index) => (
+        {images.map(({ src, alt, fit, position }, index) => (
           <section key={`focus-${index}`} className="h-screen snap-start flex items-center justify-center px-6 md:px-10">
             <motion.div
               initial={{ opacity: 0.35, scale: 0.96 }}
@@ -86,7 +89,8 @@ export function ZoomParallax({ images }: ZoomParallaxProps) {
               <img
                 src={src || '/placeholder.svg'}
                 alt={alt || `Focused image ${index + 1}`}
-                className="h-full w-full object-cover"
+                className="h-full w-full"
+                style={{ objectFit: fit || 'cover', objectPosition: position || 'center' }}
               />
             </motion.div>
           </section>
