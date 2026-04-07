@@ -4,6 +4,7 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import directorySeedData from '../data/directory.json';
 import { ImageHover } from './components/ui/image-reveal';
+import LightPillar from './components/ui/light-pillar';
 import { ZoomParallax } from './components/ui/zoom-parallax';
 import './index.css';
 
@@ -640,10 +641,27 @@ function HomePage({ onNavigate }) {
           imageSrc="/assets/Hero.png"
           imageAlt="Campus facade"
           className="absolute inset-0 z-0 parallax-layer"
-          imageClassName="absolute inset-0 h-full w-full object-cover filter blur-[1px] brightness-[0.48]"
-          overlayClassName="absolute inset-0 h-full w-full bg-[#02070a]/85 backdrop-blur-[4px] transition-all duration-300 pointer-events-none"
+          imageClassName="hidden md:block absolute inset-0 h-full w-full object-cover filter blur-[1px] brightness-[0.48]"
+          overlayClassName="hidden md:block absolute inset-0 h-full w-full bg-[#02070a]/85 backdrop-blur-[4px] transition-all duration-300 pointer-events-none"
         >
-          <div data-hero-bg className="absolute inset-0 bg-gradient-to-b from-[#07151c]/25 via-[#07151c]/50 to-[#07151c]" />
+          <div className="absolute inset-0 z-0 md:hidden">
+            <LightPillar
+              topColor="#17A9FF"
+              bottomColor="#8CEFF4"
+              intensity={0.95}
+              rotationSpeed={0.9}
+              glowAmount={0.0016}
+              pillarWidth={3}
+              pillarHeight={0.4}
+              noiseIntensity={0.35}
+              pillarRotation={18}
+              interactive
+              mixBlendMode="screen"
+              quality="high"
+            />
+          </div>
+
+          <div data-hero-bg className="absolute inset-0 bg-gradient-to-b from-[#07151c]/12 via-[#07151c]/30 to-[#07151c]/72 md:from-[#07151c]/25 md:via-[#07151c]/50 md:to-[#07151c]" />
 
           <div data-hero-content className="relative z-10 text-center px-6 max-w-4xl reveal-3d reveal-up h-full mx-auto flex flex-col items-center justify-center">
             <h1 className="font-headline text-5xl md:text-8xl mb-8 tracking-tight leading-tight">
@@ -653,13 +671,13 @@ function HomePage({ onNavigate }) {
             </h1>
             <div className="flex flex-col md:flex-row items-center justify-center gap-6 mt-12">
               <button
-                className="px-10 py-4 bg-transparent border border-[#8ceff4]/50 text-[#8ceff4] hover:bg-[#8ceff4]/10 hover:shadow-[0_0_20px_rgba(140,239,244,0.3)] transition-all duration-500 text-sm font-medium tracking-widest uppercase"
+                className="px-10 py-4 bg-[#07151c]/42 md:bg-transparent backdrop-blur-[2px] border border-[#8ceff4]/80 md:border-[#8ceff4]/50 text-[#9ff4ff] md:text-[#8ceff4] shadow-[0_0_24px_rgba(140,239,244,0.28)] hover:bg-[#8ceff4]/14 hover:shadow-[0_0_24px_rgba(140,239,244,0.38)] transition-all duration-500 text-sm font-medium tracking-widest uppercase"
                 onClick={() => onNavigate('story')}
               >
                 Read The Story
               </button>
               <button
-                className="px-10 py-4 bg-transparent border border-[#879393]/30 text-[#b2cbcd] hover:text-[#d6e5ef] transition-all duration-500 text-sm font-medium tracking-widest uppercase"
+                className="px-10 py-4 bg-[#07151c]/38 md:bg-transparent backdrop-blur-[2px] border border-[#8ceff4]/45 md:border-[#879393]/30 text-[#c7e9ed] md:text-[#b2cbcd] hover:text-[#e6fbff] md:hover:text-[#d6e5ef] hover:border-[#8ceff4]/70 transition-all duration-500 text-sm font-medium tracking-widest uppercase"
                 onClick={() => onNavigate('gallery')}
               >
                 Open Gallery
@@ -892,6 +910,16 @@ function GalleryPage() {
     {
       src: '/assets/Group 9.jpeg',
       alt: 'Group 9',
+    },
+    {
+      src: '/assets/Group 10.jpeg',
+      alt: 'Group 10',
+    },
+    {
+      src: '/assets/Group 11.jpeg',
+      alt: 'Group 11',
+      fit: 'cover',
+      position: 'center 72%',
     },
   ];
 
@@ -1143,29 +1171,34 @@ function TimelineSpine({ progressScale, leadingEdgeY }) {
 function TimelineItem({ item, side }) {
   const isLeft = side === 'left';
   const itemRef = useRef(null);
-  const hasAutoFlipped = useRef(false);
   const inView = useInView(itemRef, { amount: 0.4, once: false });
-  const [autoFlipActive, setAutoFlipActive] = useState(false);
+  const [mobileFlipped, setMobileFlipped] = useState(false);
 
   useEffect(() => {
-    if (!inView || hasAutoFlipped.current) {
-      return undefined;
+    const mediaQuery = window.matchMedia('(max-width: 768px), (hover: none), (pointer: coarse)');
+
+    const updateMode = () => {
+      const isMobileMode = mediaQuery.matches;
+      if (!isMobileMode) {
+        setMobileFlipped(false);
+      }
+    };
+
+    updateMode();
+    mediaQuery.addEventListener('change', updateMode);
+
+    return () => mediaQuery.removeEventListener('change', updateMode);
+  }, []);
+
+  const isMobileTapMode = () => window.matchMedia('(max-width: 768px), (hover: none), (pointer: coarse)').matches;
+
+  const handleCardTap = () => {
+    if (!isMobileTapMode()) {
+      return;
     }
 
-    const isTouchOrMobile = window.matchMedia('(hover: none), (pointer: coarse), (max-width: 768px)').matches;
-    if (!isTouchOrMobile) {
-      return undefined;
-    }
-
-    hasAutoFlipped.current = true;
-    setAutoFlipActive(true);
-
-    const timer = window.setTimeout(() => {
-      setAutoFlipActive(false);
-    }, 1300);
-
-    return () => window.clearTimeout(timer);
-  }, [inView]);
+    setMobileFlipped((prev) => !prev);
+  };
 
   return (
     <div ref={itemRef} className={`relative flex items-center px-1 md:px-0 ${isLeft ? 'md:justify-start' : 'md:justify-end'}`}>
@@ -1176,14 +1209,14 @@ function TimelineItem({ item, side }) {
         transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
         className={`w-full md:w-[46%] ${isLeft ? 'md:pr-16 text-left md:text-right' : 'md:pl-16 text-left'}`}
       >
-        <article className="story-flip-card">
-          <div className={`story-flip-content ${autoFlipActive ? 'story-flip-content--auto' : ''}`}>
+        <article className="story-flip-card" onClick={handleCardTap} onTouchStart={handleCardTap}>
+          <div className={`story-flip-content ${mobileFlipped ? 'story-flip-content--manual' : ''}`}>
             <div className="story-flip-face story-flip-front">
               <p className="text-[10px] md:text-[11px] uppercase tracking-[0.22em] text-[#8ceff4] mb-2 md:mb-3">{item.term}</p>
               <h3 className="font-headline text-xl sm:text-2xl md:text-3xl text-[#d6e5ef] leading-tight mb-3 md:mb-4">{item.title}</h3>
               <p className="text-[#b2cbcd] text-[0.95rem] md:text-base leading-relaxed">{item.desc}</p>
             </div>
-            <div className="story-flip-face story-flip-back" style={{ backgroundImage: `url(${item.image})` }}>
+            <div className="story-flip-face story-flip-back" style={{ backgroundImage: `url("${encodeURI(item.image)}")` }}>
               <div className="story-flip-overlay">
                 <p className="text-[10px] uppercase tracking-[0.24em] text-[#8ceff4] mb-2">Memory Frame</p>
                 <h4 className="font-headline text-2xl text-[#e6f7ff]">{item.title}</h4>
@@ -1896,25 +1929,25 @@ const storyTimelineEvents = [
     term: 'FALL 2023',
     title: 'The Quiet Arrival',
     desc: 'We stepped into a new world together, nervous yet hopeful. The first semester quietly built friendships that would anchor everything after.',
-    image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1400&auto=format&fit=crop',
+    image: '/assets/Group 10.jpeg',
   },
   {
     term: 'SPRING 2024',
     title: 'The Great Awakening',
     desc: 'Campus life found its pulse through festivals, late-night prep, and shared wins. Confidence grew when routines turned into momentum.',
-    image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1400&auto=format&fit=crop',
+    image: '/assets/Group 11.jpeg',
   },
   {
     term: 'SUMMER 2025',
     title: 'The Peak Experience',
     desc: 'Big challenges sharpened us. Projects, leadership, and setbacks taught resilience and gave the batch its defining identity.',
-    image: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?q=80&w=1400&auto=format&fit=crop',
+    image: '/assets/Group 8.jpeg',
   },
   {
     term: 'SPRING 2026',
     title: 'The Final Bow',
     desc: 'Graduation arrived in a blur of gratitude and goodbyes. We left carrying memories, lessons, and bonds that still feel close.',
-    image: 'https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?q=80&w=1400&auto=format&fit=crop',
+    image: '/assets/Hero.png',
   },
 ];
 
