@@ -343,8 +343,17 @@ function mergeProfileSources(seedProfile, liveProfile) {
   }
 
   return {
-    ...seedProfile,
     ...liveProfile,
+    ...seedProfile,
+    id: liveProfile.id || seedProfile.id,
+    name: seedProfile.name || liveProfile.name,
+    img: seedProfile.img || liveProfile.img,
+    roll: seedProfile.roll || liveProfile.roll,
+    department: seedProfile.department || liveProfile.department,
+    batch: seedProfile.batch || liveProfile.batch,
+    type: seedProfile.type || liveProfile.type,
+    gender: seedProfile.gender || liveProfile.gender,
+    classSection: seedProfile.classSection || liveProfile.classSection,
     socials: {
       ...(seedProfile.socials || {}),
       ...(liveProfile.socials || {}),
@@ -352,6 +361,7 @@ function mergeProfileSources(seedProfile, liveProfile) {
     instagram: liveProfile.instagram || seedProfile.instagram,
     linkedin: liveProfile.linkedin || seedProfile.linkedin,
     github: liveProfile.github || seedProfile.github,
+    note: liveProfile.note || seedProfile.note,
   };
 }
 
@@ -421,6 +431,33 @@ function dedupeProfilesByRoll(entries) {
   });
 
   return Array.from(map.values());
+}
+
+function getProfileMetaLine(profile) {
+  if (!profile || typeof profile !== 'object') {
+    return '';
+  }
+
+  const isFaculty =
+    profile.type === 'faculty' ||
+    profile.classSection === 'faculty' ||
+    String(profile.batch || '').toLowerCase() === 'faculty';
+
+  if (!isFaculty) {
+    return String(profile.roll || '').trim();
+  }
+
+  const explicitDegree = String(profile.degree || '').trim();
+  if (explicitDegree) {
+    return explicitDegree;
+  }
+
+  const name = String(profile.name || '').trim();
+  if (/^dr\./i.test(name)) {
+    return 'Ph.D';
+  }
+
+  return '';
 }
 
 function MainApp() {
@@ -1271,8 +1308,9 @@ function FaceItem({ img, name, delay, depth }) {
   );
 }
 
-function DirectoryProfile({ img, name, roll, delay, onClick, imgPosition }) {
+function DirectoryProfile({ img, name, roll, delay, onClick, imgPosition, type, degree, batch, classSection }) {
   const imgSrc = normalizeImageSrc(img);
+  const metaLine = getProfileMetaLine({ name, roll, type, degree, batch, classSection });
 
   return (
     <button type="button" onClick={onClick} className="group cursor-pointer reveal-3d reveal-up flex flex-col items-center text-center" style={{ transitionDelay: `${delay}ms` }}>
@@ -1280,7 +1318,7 @@ function DirectoryProfile({ img, name, roll, delay, onClick, imgPosition }) {
         <img alt={name} src={imgSrc} className="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 hover:scale-105" style={{ objectPosition: imgPosition || 'center top' }} />
       </div>
       <h4 className="font-headline text-xl text-[#d6e5ef] mb-1 group-hover:text-[#8ceff4] transition-colors">{name}</h4>
-      <p className="font-label text-[9px] tracking-[0.2em] font-bold uppercase text-[#879393]">{roll}</p>
+      {metaLine ? <p className="font-label text-[9px] tracking-[0.2em] font-bold uppercase text-[#879393]">{metaLine}</p> : null}
     </button>
   );
 }
@@ -1288,6 +1326,7 @@ function DirectoryProfile({ img, name, roll, delay, onClick, imgPosition }) {
 function DirectoryProfileDetail({ profile, onBack }) {
   const coverSrc = normalizeImageSrc(profile.img);
   const coverPosition = profile.imgPosition || 'center 20%';
+  const profileMetaLine = getProfileMetaLine(profile);
   const curatorNote =
     profile.note ||
     `${profile.name}'s dossier reflects growth, discipline, and a unique contribution to the ${profile.department} chapter of this archive. These fragments preserve both achievement and memory.`;
@@ -1339,7 +1378,7 @@ function DirectoryProfileDetail({ profile, onBack }) {
         <div className="absolute left-6 md:left-10 bottom-8 md:bottom-10 z-10">
           <p className="text-[10px] tracking-[0.3em] uppercase text-[#b2cbcd] mb-2">Archive Record</p>
           <h3 className="font-headline italic text-4xl md:text-7xl text-[#8ceff4] leading-none mb-3">{profile.name}</h3>
-          <p className="text-[#d6e5ef] text-xs md:text-sm tracking-[0.22em] uppercase">{profile.roll}</p>
+          {profileMetaLine ? <p className="text-[#d6e5ef] text-xs md:text-sm tracking-[0.22em] uppercase">{profileMetaLine}</p> : null}
         </div>
       </div>
 
