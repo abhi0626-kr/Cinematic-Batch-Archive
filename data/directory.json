@@ -367,6 +367,19 @@
         "note":  "Poornima J brings steady effort and a supportive mindset to the cohort."
     },
     {
+        "name":  "Vignesh P",
+        "roll":  "ROLL: 35522U18114",
+        "department":  "Computer Science",
+        "batch":  "2026",
+        "type":  "student",
+        "gender":  "boyz",
+        "classSection":  "class-a",
+        "img":  "/assets/Vignesh P.jpeg",
+        "id":  "profile-1775565000001-vigneshp",
+        "createdAt":  "2026-04-08T10:00:00.001Z",
+        "note":  "Vignesh P joins Class-A with a calm, confident presence and a strong visual identity."
+    },
+    {
         "name":  "Poovarasan K",
         "roll":  "ROLL: 35523U18053",
         "department":  "Computer Science",
