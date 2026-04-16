@@ -1504,11 +1504,14 @@ function DirectoryProfileDetail({ profile, onBack, onSave }) {
   const [socialSaveMessage, setSocialSaveMessage] = useState('');
   const [socialSaveError, setSocialSaveError] = useState('');
   const [firebaseStatus, setFirebaseStatus] = useState('ready');
+  const [isAddLinksOpen, setIsAddLinksOpen] = useState(false);
 
   const socialLinks = SOCIAL_LINK_META.map((item) => ({
     ...item,
     href: getSocialLinkHref(item.key, socialForm[item.key] || getProfileSocialValue(profile, item.key)),
   })).filter((link) => Boolean(link.href));
+  const hasSavedSocialLinks = socialLinks.length > 0;
+  const hasAllSocialLinks = SOCIAL_LINK_META.every((item) => Boolean(getProfileSocialValue(profile, item.key)));
 
   useEffect(() => {
     setSocialForm(
@@ -1519,6 +1522,7 @@ function DirectoryProfileDetail({ profile, onBack, onSave }) {
     );
     setSocialSaveMessage('');
     setSocialSaveError('');
+    setIsAddLinksOpen(false);
   }, [profile]);
 
   useEffect(() => {
@@ -1557,6 +1561,7 @@ function DirectoryProfileDetail({ profile, onBack, onSave }) {
       await onSave(profile, payload);
       setSocialSaveMessage('Links updated successfully.');
       setFirebaseStatus('connected');
+      setIsAddLinksOpen(false);
     } catch (error) {
       setFirebaseStatus('error');
       setSocialSaveError(error instanceof Error && error.message ? error.message : 'Unable to save links right now.');
@@ -1627,7 +1632,7 @@ function DirectoryProfileDetail({ profile, onBack, onSave }) {
           <div>
             <p className="text-[10px] tracking-[0.22em] uppercase text-[#ffd9bb] mb-6">Curator's Note</p>
             <p className="text-[#d6e5ef] text-lg leading-relaxed">{curatorNote}</p>
-            {socialLinks.length > 0 && (
+            {hasSavedSocialLinks ? (
               <div className="mt-8">
                 <p className="text-[10px] tracking-[0.18em] uppercase text-[#879393] mb-3">Social Links</p>
                 <div className="flex flex-wrap gap-3">
@@ -1647,77 +1652,106 @@ function DirectoryProfileDetail({ profile, onBack, onSave }) {
                   ))}
                 </div>
               </div>
-            )}
-            <form onSubmit={handleSocialFormSubmit} className="mt-10 border border-[#3e4949]/30 bg-[#08151c] p-5 md:p-6">
-              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-5">
-                <div>
-                  <p className="text-[10px] tracking-[0.18em] uppercase text-[#8ceff4] mb-2">Edit Links</p>
-                  <h4 className="font-headline text-2xl text-[#d6e5ef]">Update profile contact links</h4>
-                </div>
-                <div className="flex flex-col items-start md:items-end gap-2">
-                  <span
-                    className={`inline-flex items-center gap-2 px-3 py-1 border text-[10px] tracking-[0.18em] uppercase ${
-                      firebaseStatus === 'connected' || firebaseStatus === 'ready'
-                        ? 'border-[#8ceff4]/55 text-[#8ceff4]'
-                        : firebaseStatus === 'error'
-                          ? 'border-[#ff9c9c]/55 text-[#ffb4b4]'
-                          : 'border-[#879393]/45 text-[#b2cbcd]'
-                    }`}
+            ) : null}
+
+            {!hasAllSocialLinks ? (
+              <div className="mt-8">
+                {!isAddLinksOpen ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsAddLinksOpen(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-[#8ceff4]/45 text-[10px] tracking-[0.22em] uppercase text-[#8ceff4] hover:border-[#8ceff4]/75 hover:bg-[#8ceff4]/10 transition-colors"
+                    aria-label="Add social links"
+                    title="Add links"
                   >
-                    <span
-                      className={`h-2 w-2 rounded-full ${
-                        firebaseStatus === 'connected' || firebaseStatus === 'ready'
-                          ? 'bg-[#8ceff4]'
-                          : firebaseStatus === 'error'
-                            ? 'bg-[#ff9c9c]'
-                            : 'bg-[#b2cbcd] animate-pulse'
-                      }`}
-                    />
-                    {firebaseStatus === 'connected' || firebaseStatus === 'ready'
-                      ? 'Connected to Firebase'
-                      : firebaseStatus === 'error'
-                        ? 'Firebase connection failed'
-                        : 'Connecting to Firebase'}
-                  </span>
-                  <p className="text-[10px] tracking-[0.16em] uppercase text-[#879393]">Allowed only: Phone_number, Instagram, GitHub, Portfolio, LinkedIn, Email</p>
-                </div>
-              </div>
+                    <span className="material-symbols-outlined text-[16px] leading-none" aria-hidden="true">
+                      add_circle
+                    </span>
+                    Add Links
+                  </button>
+                ) : (
+                  <form onSubmit={handleSocialFormSubmit} className="border border-[#3e4949]/30 bg-[#08151c] p-5 md:p-6">
+                    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-5">
+                      <div>
+                        <p className="text-[10px] tracking-[0.18em] uppercase text-[#8ceff4] mb-2">Add Links</p>
+                        <h4 className="font-headline text-2xl text-[#d6e5ef]">Add profile contact links</h4>
+                      </div>
+                      <div className="flex flex-col items-start md:items-end gap-2">
+                        <span
+                          className={`inline-flex items-center gap-2 px-3 py-1 border text-[10px] tracking-[0.18em] uppercase ${
+                            firebaseStatus === 'connected' || firebaseStatus === 'ready'
+                              ? 'border-[#8ceff4]/55 text-[#8ceff4]'
+                              : firebaseStatus === 'error'
+                                ? 'border-[#ff9c9c]/55 text-[#ffb4b4]'
+                                : 'border-[#879393]/45 text-[#b2cbcd]'
+                          }`}
+                        >
+                          <span
+                            className={`h-2 w-2 rounded-full ${
+                              firebaseStatus === 'connected' || firebaseStatus === 'ready'
+                                ? 'bg-[#8ceff4]'
+                                : firebaseStatus === 'error'
+                                  ? 'bg-[#ff9c9c]'
+                                  : 'bg-[#b2cbcd] animate-pulse'
+                            }`}
+                          />
+                          {firebaseStatus === 'connected' || firebaseStatus === 'ready'
+                            ? 'Connected to Firebase'
+                            : firebaseStatus === 'error'
+                              ? 'Firebase connection failed'
+                              : 'Connecting to Firebase'}
+                        </span>
+                        <p className="text-[10px] tracking-[0.16em] uppercase text-[#879393]">Allowed only: Phone_number, Instagram, GitHub, Portfolio, LinkedIn, Email</p>
+                      </div>
+                    </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                {SOCIAL_LINK_META.map((item) => (
-                  <label key={item.key} className="flex flex-col gap-2">
-                    <span className="text-[10px] tracking-[0.2em] uppercase text-[#b2cbcd]">{item.label}</span>
-                    <input
-                      type={item.key === 'email' ? 'email' : item.key === 'phone_number' ? 'tel' : 'text'}
-                      value={socialForm[item.key] || ''}
-                      onChange={handleSocialInputChange(item.key)}
-                      placeholder={
-                        item.key === 'phone_number'
-                          ? '+91 98765 43210'
-                          : item.key === 'email'
-                            ? 'name@example.com'
-                            : 'https://...'
-                      }
-                      className="w-full bg-transparent border border-[#3e4949]/45 px-4 py-3 text-[#d6e5ef] placeholder:text-[#879393]/45 focus:outline-none focus:border-[#8ceff4]/70 transition-colors"
-                    />
-                  </label>
-                ))}
-              </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {SOCIAL_LINK_META.map((item) => (
+                        <label key={item.key} className="flex flex-col gap-2">
+                          <span className="text-[10px] tracking-[0.2em] uppercase text-[#b2cbcd]">{item.label}</span>
+                          <input
+                            type={item.key === 'email' ? 'email' : item.key === 'phone_number' ? 'tel' : 'text'}
+                            value={socialForm[item.key] || ''}
+                            onChange={handleSocialInputChange(item.key)}
+                            placeholder={
+                              item.key === 'phone_number'
+                                ? '+91 98765 43210'
+                                : item.key === 'email'
+                                  ? 'name@example.com'
+                                  : 'https://...'
+                            }
+                            className="w-full bg-transparent border border-[#3e4949]/45 px-4 py-3 text-[#d6e5ef] placeholder:text-[#879393]/45 focus:outline-none focus:border-[#8ceff4]/70 transition-colors"
+                          />
+                        </label>
+                      ))}
+                    </div>
 
-              <div className="mt-5 flex flex-col md:flex-row md:items-center gap-3 justify-between">
-                <div className="min-h-5">
-                  {socialSaveMessage ? <p className="text-[11px] tracking-[0.12em] uppercase text-[#8ceff4]">{socialSaveMessage}</p> : null}
-                  {socialSaveError ? <p className="text-[11px] tracking-[0.12em] uppercase text-[#ffb4b4]">{socialSaveError}</p> : null}
-                </div>
-                <button
-                  type="submit"
-                  disabled={isSavingLinks}
-                  className="px-5 py-3 border border-[#8ceff4]/45 text-[10px] tracking-[0.22em] uppercase text-[#d6e5ef] hover:border-[#8ceff4]/75 hover:text-[#8ceff4] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isSavingLinks ? 'Saving...' : 'Save Links'}
-                </button>
+                    <div className="mt-5 flex flex-col md:flex-row md:items-center gap-3 justify-between">
+                      <div className="min-h-5">
+                        {socialSaveMessage ? <p className="text-[11px] tracking-[0.12em] uppercase text-[#8ceff4]">{socialSaveMessage}</p> : null}
+                        {socialSaveError ? <p className="text-[11px] tracking-[0.12em] uppercase text-[#ffb4b4]">{socialSaveError}</p> : null}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setIsAddLinksOpen(false)}
+                          className="px-5 py-3 border border-[#879393]/40 text-[10px] tracking-[0.22em] uppercase text-[#d6e5ef] hover:border-[#8ceff4]/60 hover:text-[#8ceff4] transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isSavingLinks}
+                          className="px-5 py-3 border border-[#8ceff4]/45 text-[10px] tracking-[0.22em] uppercase text-[#d6e5ef] hover:border-[#8ceff4]/75 hover:text-[#8ceff4] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {isSavingLinks ? 'Saving...' : 'Add Links'}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                )}
               </div>
-            </form>
+            ) : null}
             {/* <button type="button" className="mt-8 px-6 py-3 border border-[#879393]/40 text-[10px] tracking-[0.22em] uppercase text-[#d6e5ef] hover:border-[#8ceff4]/60 transition-colors">
               Download Full Dossier
             </button> */}
