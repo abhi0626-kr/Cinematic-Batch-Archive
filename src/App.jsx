@@ -1,7 +1,7 @@
 import React, { Component, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useInView, useScroll, useSpring, useTransform } from 'framer-motion';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, doc, getDocs, setDoc } from 'firebase/firestore';
 import directorySeedData from '../data/directory.json';
 import { ImageHover } from './components/ui/image-reveal';
 import LightPillar from './components/ui/light-pillar';
@@ -57,10 +57,34 @@ const DIRECTORY_FILTERS = [
 ];
 
 const SOCIAL_LINK_META = [
+  { key: 'phone_number', label: 'Phone_number', icon: 'call' },
   { key: 'instagram', label: 'Instagram', icon: 'photo_camera' },
-  { key: 'linkedin', label: 'LinkedIn', icon: 'business_center' },
   { key: 'github', label: 'GitHub', icon: 'code' },
+  { key: 'portfolio', label: 'Portfolio', icon: 'language' },
+  { key: 'linkedin', label: 'LinkedIn', icon: 'business_center' },
+  { key: 'email', label: 'Email', icon: 'mail' },
 ];
+
+const SOCIAL_LINK_KEY_ALIAS = {
+  phone: 'phone_number',
+  phoneNumber: 'phone_number',
+  phonenumber: 'phone_number',
+  mail: 'email',
+};
+
+const SOCIAL_LINK_ALLOWED_KEYS = new Set(SOCIAL_LINK_META.map((item) => item.key));
+
+function normalizeSocialKey(rawKey) {
+  const source = String(rawKey || '').trim();
+  if (!source) {
+    return '';
+  }
+
+  const compact = source.replace(/[\s-]+/g, '_');
+  const lowered = compact.toLowerCase();
+
+  return SOCIAL_LINK_KEY_ALIAS[source] || SOCIAL_LINK_KEY_ALIAS[lowered] || lowered;
+}
 
 function getPageFromHash() {
   const hash = window.location.hash.replace('#', '').toLowerCase();
@@ -325,6 +349,93 @@ function normalizeExternalUrl(url) {
   return '';
 }
 
+function stripUndefinedValues(value) {
+  if (Array.isArray(value)) {
+    return value.map(stripUndefinedValues).filter((item) => item !== undefined);
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.entries(value).reduce((accumulator, [key, item]) => {
+      if (item === undefined) {
+        return accumulator;
+      }
+
+      const nextValue = stripUndefinedValues(item);
+      if (nextValue !== undefined) {
+        accumulator[key] = nextValue;
+      }
+
+      return accumulator;
+    }, {});
+  }
+
+  return value;
+}
+
+function sanitizePhoneNumber(rawValue) {
+  const normalized = String(rawValue || '').replace(/[^\d+]/g, '');
+  return normalized.trim();
+}
+
+function getProfileSocialValue(profile, key) {
+  if (!profile || typeof profile !== 'object') {
+    return '';
+  }
+
+  if (!SOCIAL_LINK_ALLOWED_KEYS.has(key)) {
+    return '';
+  }
+
+  const directValue = profile[key];
+  if (directValue) {
+    return String(directValue).trim();
+  }
+
+  const socials = profile.socials;
+  if (!socials) {
+    return '';
+  }
+
+  if (Array.isArray(socials)) {
+    const match = socials.find((item) => {
+      const rawType = item?.type || item?.key || item?.category;
+      if (!rawType) {
+        return false;
+      }
+
+      const mapped = normalizeSocialKey(rawType);
+      return mapped === key;
+    });
+    return String(match?.value || match?.url || '').trim();
+  }
+
+  const socialsKey = socials[key] || socials[normalizeSocialKey(key)] || socials[String(key || '').toUpperCase()] || socials[String(key || '').toLowerCase()];
+  if (socialsKey) {
+    return String(socialsKey).trim();
+  }
+
+  return '';
+}
+
+function getSocialLinkHref(key, value) {
+  const raw = String(value || '').trim();
+  if (!raw) {
+    return '';
+  }
+
+  if (key === 'phone_number') {
+    const phone = sanitizePhoneNumber(raw);
+    return phone ? `tel:${phone}` : '';
+  }
+
+  if (key === 'email') {
+    const email = raw.replace(/^mailto:/i, '').trim();
+    return email ? `mailto:${email}` : '';
+  }
+
+  return normalizeExternalUrl(raw);
+}
+
 function getProfileRollKey(profile) {
   return String(profile?.roll || profile?.id || '').trim();
 }
@@ -358,9 +469,12 @@ function mergeProfileSources(seedProfile, liveProfile) {
       ...(seedProfile.socials || {}),
       ...(liveProfile.socials || {}),
     },
+    phone_number: liveProfile.phone_number || seedProfile.phone_number,
     instagram: liveProfile.instagram || seedProfile.instagram,
+    portfolio: liveProfile.portfolio || seedProfile.portfolio,
     linkedin: liveProfile.linkedin || seedProfile.linkedin,
     github: liveProfile.github || seedProfile.github,
+    email: liveProfile.email || seedProfile.email,
     note: liveProfile.note || seedProfile.note,
   };
 }
@@ -390,7 +504,7 @@ function countAvailableSocialLinks(profile) {
   }
 
   return SOCIAL_LINK_META.reduce((count, item) => {
-    const candidate = profile[item.key] || profile.socials?.[item.key];
+    const candidate = getProfileSocialValue(profile, item.key);
     return candidate ? count + 1 : count;
   }, 0);
 }
@@ -746,6 +860,34 @@ function DirectoryPage() {
   const [directoryPeople, setDirectoryPeople] = useState([]);
   const [isDirectoryLoading, setIsDirectoryLoading] = useState(true);
 
+  const upsertDirectoryProfile = async (profile, updates) => {
+    const profileId = String(profile?.id || profile?.roll || '').trim();
+    if (!profileId) {
+      throw new Error('Missing profile identifier');
+    }
+
+    const nextProfile = stripUndefinedValues({
+      ...profile,
+      ...updates,
+      socials: {
+        ...(profile.socials || {}),
+        ...(updates.socials || {}),
+      },
+    });
+
+    setDirectoryPeople((current) =>
+      sortPeopleByNameThenRoll(
+        dedupeProfilesByRoll(
+          current.map((item) => (getProfileRollKey(item) === getProfileRollKey(profile) ? mergeProfileSources(item, nextProfile) : item)),
+        ),
+      ),
+    );
+    setSelectedProfile(nextProfile);
+
+    await setDoc(doc(firestoreDb, 'directory', profileId), nextProfile, { merge: true });
+    return nextProfile;
+  };
+
   // Fetch directory people from backend API
   useEffect(() => {
     const loadFromFirestore = async () => {
@@ -856,7 +998,7 @@ function DirectoryPage() {
     <section id="directory-archive" data-section="Archive" className="py-16 px-6 section-container">
       <div className="max-w-7xl mx-auto">
         {selectedProfile ? (
-          <DirectoryProfileDetail profile={selectedProfile} onBack={() => setSelectedProfile(null)} />
+          <DirectoryProfileDetail profile={selectedProfile} onBack={() => setSelectedProfile(null)} onSave={upsertDirectoryProfile} />
         ) : (
           <>
             <PageTitle eyebrow="Directory" title="The Archive Index" description="A searchable register of people who shaped this chapter." />
@@ -1345,21 +1487,83 @@ function DirectoryProfileSkeleton({ delay = 0 }) {
   );
 }
 
-function DirectoryProfileDetail({ profile, onBack }) {
+function DirectoryProfileDetail({ profile, onBack, onSave }) {
   const coverSrc = normalizeImageSrc(profile.img);
   const coverPosition = profile.imgPosition || 'center 20%';
   const profileMetaLine = getProfileMetaLine(profile);
   const curatorNote =
     profile.note ||
     `${profile.name}'s dossier reflects growth, discipline, and a unique contribution to the ${profile.department} chapter of this archive. These fragments preserve both achievement and memory.`;
+  const [socialForm, setSocialForm] = useState(() =>
+    SOCIAL_LINK_META.reduce((accumulator, item) => {
+      accumulator[item.key] = getProfileSocialValue(profile, item.key);
+      return accumulator;
+    }, {}),
+  );
+  const [isSavingLinks, setIsSavingLinks] = useState(false);
+  const [socialSaveMessage, setSocialSaveMessage] = useState('');
+  const [socialSaveError, setSocialSaveError] = useState('');
+  const [firebaseStatus, setFirebaseStatus] = useState('ready');
+
   const socialLinks = SOCIAL_LINK_META.map((item) => ({
     ...item,
-    href: normalizeExternalUrl(profile[item.key] || profile.socials?.[item.key]),
+    href: getSocialLinkHref(item.key, socialForm[item.key] || getProfileSocialValue(profile, item.key)),
   })).filter((link) => Boolean(link.href));
+
+  useEffect(() => {
+    setSocialForm(
+      SOCIAL_LINK_META.reduce((accumulator, item) => {
+        accumulator[item.key] = getProfileSocialValue(profile, item.key);
+        return accumulator;
+      }, {}),
+    );
+    setSocialSaveMessage('');
+    setSocialSaveError('');
+  }, [profile]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [profile.id]);
+
+  const handleSocialInputChange = (key) => (event) => {
+    setSocialForm((current) => ({ ...current, [key]: event.target.value }));
+    setSocialSaveMessage('');
+    setSocialSaveError('');
+  };
+
+  const handleSocialFormSubmit = async (event) => {
+    event.preventDefault();
+
+    if (typeof onSave !== 'function') {
+      setSocialSaveError('Saving is unavailable right now.');
+      return;
+    }
+
+    const nextSocials = SOCIAL_LINK_META.reduce((accumulator, item) => {
+      const value = String(socialForm[item.key] || '').trim();
+      if (value) {
+        accumulator[item.key] = item.key === 'phone_number' ? sanitizePhoneNumber(value) : value;
+      }
+      return accumulator;
+    }, {});
+
+    const payload = stripUndefinedValues({
+      ...nextSocials,
+      socials: nextSocials,
+    });
+
+    try {
+      setIsSavingLinks(true);
+      await onSave(profile, payload);
+      setSocialSaveMessage('Links updated successfully.');
+      setFirebaseStatus('connected');
+    } catch (error) {
+      setFirebaseStatus('error');
+      setSocialSaveError(error instanceof Error && error.message ? error.message : 'Unable to save links right now.');
+    } finally {
+      setIsSavingLinks(false);
+    }
+  };
 
   return (
     <article className="w-full reveal-3d reveal-up is-visible">
@@ -1444,6 +1648,76 @@ function DirectoryProfileDetail({ profile, onBack }) {
                 </div>
               </div>
             )}
+            <form onSubmit={handleSocialFormSubmit} className="mt-10 border border-[#3e4949]/30 bg-[#08151c] p-5 md:p-6">
+              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-5">
+                <div>
+                  <p className="text-[10px] tracking-[0.18em] uppercase text-[#8ceff4] mb-2">Edit Links</p>
+                  <h4 className="font-headline text-2xl text-[#d6e5ef]">Update profile contact links</h4>
+                </div>
+                <div className="flex flex-col items-start md:items-end gap-2">
+                  <span
+                    className={`inline-flex items-center gap-2 px-3 py-1 border text-[10px] tracking-[0.18em] uppercase ${
+                      firebaseStatus === 'connected' || firebaseStatus === 'ready'
+                        ? 'border-[#8ceff4]/55 text-[#8ceff4]'
+                        : firebaseStatus === 'error'
+                          ? 'border-[#ff9c9c]/55 text-[#ffb4b4]'
+                          : 'border-[#879393]/45 text-[#b2cbcd]'
+                    }`}
+                  >
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        firebaseStatus === 'connected' || firebaseStatus === 'ready'
+                          ? 'bg-[#8ceff4]'
+                          : firebaseStatus === 'error'
+                            ? 'bg-[#ff9c9c]'
+                            : 'bg-[#b2cbcd] animate-pulse'
+                      }`}
+                    />
+                    {firebaseStatus === 'connected' || firebaseStatus === 'ready'
+                      ? 'Connected to Firebase'
+                      : firebaseStatus === 'error'
+                        ? 'Firebase connection failed'
+                        : 'Connecting to Firebase'}
+                  </span>
+                  <p className="text-[10px] tracking-[0.16em] uppercase text-[#879393]">Allowed only: Phone_number, Instagram, GitHub, Portfolio, LinkedIn, Email</p>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                {SOCIAL_LINK_META.map((item) => (
+                  <label key={item.key} className="flex flex-col gap-2">
+                    <span className="text-[10px] tracking-[0.2em] uppercase text-[#b2cbcd]">{item.label}</span>
+                    <input
+                      type={item.key === 'email' ? 'email' : item.key === 'phone_number' ? 'tel' : 'text'}
+                      value={socialForm[item.key] || ''}
+                      onChange={handleSocialInputChange(item.key)}
+                      placeholder={
+                        item.key === 'phone_number'
+                          ? '+91 98765 43210'
+                          : item.key === 'email'
+                            ? 'name@example.com'
+                            : 'https://...'
+                      }
+                      className="w-full bg-transparent border border-[#3e4949]/45 px-4 py-3 text-[#d6e5ef] placeholder:text-[#879393]/45 focus:outline-none focus:border-[#8ceff4]/70 transition-colors"
+                    />
+                  </label>
+                ))}
+              </div>
+
+              <div className="mt-5 flex flex-col md:flex-row md:items-center gap-3 justify-between">
+                <div className="min-h-5">
+                  {socialSaveMessage ? <p className="text-[11px] tracking-[0.12em] uppercase text-[#8ceff4]">{socialSaveMessage}</p> : null}
+                  {socialSaveError ? <p className="text-[11px] tracking-[0.12em] uppercase text-[#ffb4b4]">{socialSaveError}</p> : null}
+                </div>
+                <button
+                  type="submit"
+                  disabled={isSavingLinks}
+                  className="px-5 py-3 border border-[#8ceff4]/45 text-[10px] tracking-[0.22em] uppercase text-[#d6e5ef] hover:border-[#8ceff4]/75 hover:text-[#8ceff4] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isSavingLinks ? 'Saving...' : 'Save Links'}
+                </button>
+              </div>
+            </form>
             {/* <button type="button" className="mt-8 px-6 py-3 border border-[#879393]/40 text-[10px] tracking-[0.22em] uppercase text-[#d6e5ef] hover:border-[#8ceff4]/60 transition-colors">
               Download Full Dossier
             </button> */}
