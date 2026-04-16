@@ -744,11 +744,13 @@ function DirectoryPage() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [directoryPeople, setDirectoryPeople] = useState([]);
+  const [isDirectoryLoading, setIsDirectoryLoading] = useState(true);
 
   // Fetch directory people from backend API
   useEffect(() => {
     const loadFromFirestore = async () => {
       try {
+        setIsDirectoryLoading(true);
         const snapshot = await getDocs(collection(firestoreDb, 'directory'));
         const liveEntries = snapshot.docs.map((record) => ({
           id: record.id,
@@ -769,6 +771,8 @@ function DirectoryPage() {
       } catch {
         const seedEntries = Array.isArray(directorySeedData) ? directorySeedData : [];
         setDirectoryPeople(sortPeopleByNameThenRoll(dedupeProfilesByRoll(seedEntries)));
+      } finally {
+        setIsDirectoryLoading(false);
       }
     };
 
@@ -890,11 +894,13 @@ function DirectoryPage() {
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-y-14 gap-x-8">
-              {sortedFilteredPeople.map((person, index) => (
-                <DirectoryProfile key={person.roll} {...person} delay={(index % 5) * 90} onClick={() => setSelectedProfile(person)} />
-              ))}
+              {isDirectoryLoading
+                ? Array.from({ length: 10 }).map((_, index) => <DirectoryProfileSkeleton key={`directory-skeleton-${index}`} delay={(index % 5) * 90} />)
+                : sortedFilteredPeople.map((person, index) => (
+                    <DirectoryProfile key={person.roll} {...person} delay={(index % 5) * 90} onClick={() => setSelectedProfile(person)} />
+                  ))}
             </div>
-            {sortedFilteredPeople.length === 0 && (
+            {!isDirectoryLoading && sortedFilteredPeople.length === 0 && (
               <p className="text-center text-sm tracking-[0.15em] uppercase text-[#879393] mt-10">No records match your filters.</p>
             )}
           </>
@@ -1320,6 +1326,22 @@ function DirectoryProfile({ img, name, roll, delay, onClick, imgPosition, type, 
       <h4 className="font-headline text-xl text-[#d6e5ef] mb-1 group-hover:text-[#8ceff4] transition-colors">{name}</h4>
       {metaLine ? <p className="font-label text-[9px] tracking-[0.2em] font-bold uppercase text-[#879393]">{metaLine}</p> : null}
     </button>
+  );
+}
+
+function DirectoryProfileSkeleton({ delay = 0 }) {
+  return (
+    <div
+      className="group flex flex-col items-center text-center reveal-3d reveal-up"
+      style={{ transitionDelay: `${delay}ms` }}
+      aria-hidden="true"
+    >
+      <div className="w-28 h-28 md:w-36 md:h-36 mb-5 rounded-[1.25rem] overflow-hidden bg-[#0f1d25] border border-[#3e4949]/30 shadow-xl animate-pulse">
+        <div className="h-full w-full bg-[linear-gradient(90deg,rgba(62,73,73,0.25)_0%,rgba(140,239,244,0.14)_50%,rgba(62,73,73,0.25)_100%)] skeleton-shimmer" />
+      </div>
+      <div className="h-5 w-28 rounded bg-[#3e4949]/50 animate-pulse mb-2" />
+      <div className="h-3 w-20 rounded bg-[#3e4949]/35 animate-pulse" />
+    </div>
   );
 }
 
