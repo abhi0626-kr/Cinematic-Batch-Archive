@@ -23,10 +23,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+function getDirectoryDocId(profile) {
+  const rollKey = String(profile?.roll || '').trim();
+  if (rollKey) {
+    return rollKey.replace(/[^a-zA-Z0-9]/g, "_");
+  }
+
+  const fallbackId = String(profile?.id || '').trim();
+  return fallbackId.replace(/[^a-zA-Z0-9]/g, "_");
+}
+
 async function migrate() {
   console.log(`Loaded ${directory.length} profiles from directory.json`);
   for (const profile of directory) {
-    const docId = profile.roll.replace(/[^a-zA-Z0-9]/g, "_");
+    const docId = getDirectoryDocId(profile);
     try {
       await setDoc(doc(collection(db, "directory"), docId), profile);
       console.log(`Uploaded: ${profile.name}`);

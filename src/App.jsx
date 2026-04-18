@@ -440,6 +440,16 @@ function getProfileRollKey(profile) {
   return String(profile?.roll || profile?.id || '').trim();
 }
 
+function getDirectoryDocId(profile) {
+  const rollKey = String(profile?.roll || '').trim();
+  if (rollKey) {
+    return rollKey.replace(/[^a-zA-Z0-9]/g, '_');
+  }
+
+  const fallbackId = String(profile?.id || '').trim();
+  return fallbackId.replace(/[^a-zA-Z0-9]/g, '_');
+}
+
 function mergeProfileSources(seedProfile, liveProfile) {
   if (!seedProfile && !liveProfile) {
     return null;
@@ -861,7 +871,7 @@ function DirectoryPage() {
   const [isDirectoryLoading, setIsDirectoryLoading] = useState(true);
 
   const upsertDirectoryProfile = async (profile, updates) => {
-    const profileId = String(profile?.id || profile?.roll || '').trim();
+    const profileId = getDirectoryDocId(profile);
     if (!profileId) {
       throw new Error('Missing profile identifier');
     }

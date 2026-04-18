@@ -54,6 +54,19 @@
         "note":  "Ajay S joins the archive with a calm, steady presence in the Computer Science cohort."
     },
     {
+        "name":  "Ajith S",
+        "roll":  "ROLL: 35523U18005",
+        "department":  "Computer Science",
+        "batch":  "2026",
+        "type":  "student",
+        "gender":  "boyz",
+        "classSection":  "class-a",
+        "img":  "/assets/Ajith S.jpeg",
+        "id":  "profile-1776492000001-ajiths",
+        "createdAt":  "2026-04-18T10:00:00.001Z",
+        "note":  "Ajith S is remembered for confidence, consistency, and positive energy in the class journey."
+    },
+    {
         "name":  "Anbuselvan K",
         "roll":  "ROLL: 35523U18006",
         "department":  "Computer Science",
@@ -105,6 +118,19 @@
         "id":  "profile-1775200100001-dplks",
         "createdAt":  "2026-04-02T10:00:00.001Z",
         "note":  "Deepalakshmi G adds warmth and determination to the class community."
+    },
+    {
+        "name":  "Dhanapal S",
+        "roll":  "ROLL: 35523U18013",
+        "department":  "Computer Science",
+        "batch":  "2026",
+        "type":  "student",
+        "gender":  "boyz",
+        "classSection":  "class-a",
+        "img":  "/assets/Dhanapal S.jpeg",
+        "id":  "profile-1776492000002-dhanapals",
+        "createdAt":  "2026-04-18T10:00:00.002Z",
+        "note":  "Dhanapal S brings calm focus and dependable effort to the Computer Science cohort."
     },
     {
         "name":  "Dhanush D",
@@ -543,6 +569,19 @@
         "note":  "Pavya R adds creativity and a balanced perspective to the class journey."
     },
     {
+        "name":  "Perarasi M",
+        "roll":  "ROLL: 35523U18051",
+        "department":  "Computer Science",
+        "batch":  "2026",
+        "type":  "student",
+        "gender":  "girls",
+        "classSection":  "class-b",
+        "img":  "/assets/Perarasi M.jpeg",
+        "id":  "profile-1776492000003-perarasim",
+        "createdAt":  "2026-04-18T10:00:00.003Z",
+        "note":  "Perarasi M is known for steady commitment, composure, and a supportive class presence."
+    },
+    {
         "name":  "Poornima J",
         "roll":  "ROLL: 35523U18052",
         "department":  "Computer Science",
@@ -738,6 +777,19 @@
         "note":  "Sakthi K is known for a calm attitude and consistent effort throughout Class-B."
     },
     {
+        "name":  "Sakthivel V",
+        "roll":  "ROLL: 35523U18069",
+        "department":  "Computer Science",
+        "batch":  "2026",
+        "type":  "student",
+        "gender":  "boyz",
+        "classSection":  "class-b",
+        "img":  "/assets/Sakthivel V.jpeg",
+        "id":  "profile-1776492000004-sakthivelv",
+        "createdAt":  "2026-04-18T10:00:00.004Z",
+        "note":  "Sakthivel V contributes confidence, positivity, and a focused presence in Class-B."
+    },
+    {
         "name":  "Saleem N",
         "roll":  "ROLL: 35523U18070",
         "department":  "Computer Science",
@@ -868,6 +920,19 @@
         "note":  "Umamagesh M brings focus and consistency to the Computer Science cohort. In Class-B, she is known for teamwork, steady effort, and a calm presence during key projects."
     },
     {
+        "name":  "Vasanthi G",
+        "roll":  "ROLL: 35523U18093",
+        "department":  "Computer Science",
+        "batch":  "2026",
+        "type":  "student",
+        "gender":  "girls",
+        "classSection":  "class-b",
+        "img":  "/assets/Vasanthi G.jpeg",
+        "id":  "profile-1776492000005-vasanthig",
+        "createdAt":  "2026-04-18T10:00:00.005Z",
+        "note":  "Vasanthi G brings grace, consistency, and a calm approach to the class journey."
+    },
+    {
         "name":  "Vignesh P",
         "roll":  "ROLL: 35522U18114",
         "department":  "Computer Science",
@@ -892,6 +957,19 @@
         "id":  "profile-1775469900001-vijayt",
         "createdAt":  "2026-04-07T00:00:00.001Z",
         "note":  "Vijay T brings a calm, steady presence to the Computer Science cohort."
+    },
+    {
+        "name":  "Vijaya Ragavan S",
+        "roll":  "ROLL: 35523U18097",
+        "department":  "Computer Science",
+        "batch":  "2026",
+        "type":  "student",
+        "gender":  "boyz",
+        "classSection":  "class-b",
+        "img":  "/assets/Vijaya Ragavan S.jpeg",
+        "id":  "profile-1776492000006-vijayaragavans",
+        "createdAt":  "2026-04-18T10:00:00.006Z",
+        "note":  "Vijaya Ragavan S is known for confidence, friendly energy, and steady participation in Class-B."
     },
     {
         "name":  "Vikram M",
