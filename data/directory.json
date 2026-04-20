@@ -634,6 +634,19 @@
         "note":  "Pradeep S brings focus and consistency to the Computer Science cohort. In Class-B, he is known for teamwork, steady effort, and a calm presence during key projects."
     },
     {
+        "name":  "Prasanth P",
+        "roll":  "ROLL: 35523U18057",
+        "department":  "Computer Science",
+        "batch":  "2026",
+        "type":  "student",
+        "gender":  "boyz",
+        "classSection":  "class-b",
+        "img":  "/assets/Prasanth P.png",
+        "id":  "profile-1776664800001-prasanthp",
+        "createdAt":  "2026-04-20T10:00:00.001Z",
+        "note":  "Prasanth P is remembered for a composed style and confident presence in the class archive."
+    },
+    {
         "name":  "Prathisha J",
         "roll":  "ROLL: 35523U18058",
         "department":  "Computer Science",
@@ -827,6 +840,19 @@
         "id":  "profile-1775560000005-saravm",
         "createdAt":  "2026-04-07T12:00:00.005Z",
         "note":  "Saravanan M brings a composed presence and dependable team spirit to Class-B."
+    },
+    {
+        "name":  "Sathyaraj D",
+        "roll":  "ROLL: 35523U18077",
+        "department":  "Computer Science",
+        "batch":  "2026",
+        "type":  "student",
+        "gender":  "boyz",
+        "classSection":  "class-b",
+        "img":  "/assets/Sathyaraj D.jpeg",
+        "id":  "profile-1776664800002-sathyarajd",
+        "createdAt":  "2026-04-20T10:00:00.002Z",
+        "note":  "Sathyaraj D adds strong confidence, positive energy, and steady participation to Class-B."
     },
     {
         "name":  "Senbagapriya G",
