@@ -293,6 +293,19 @@
         "note":  "Gowtham P joins the archive with a calm, steady presence in the Computer Science cohort."
     },
     {
+        "name":  "Jeevanantham M",
+        "roll":  "ROLL: 35523U18027",
+        "department":  "Computer Science",
+        "batch":  "2026",
+        "type":  "student",
+        "gender":  "boyz",
+        "classSection":  "class-a",
+        "img":  "/assets/Jeevanantham M.jpeg",
+        "id":  "profile-1776751200001-jeevananthamm",
+        "createdAt":  "2026-04-21T10:00:00.001Z",
+        "note":  "Jeevanantham M adds confidence, focus, and a calm class presence to the archive."
+    },
+    {
         "name":  "Jidendhirakumar S",
         "roll":  "ROLL: 35523U18028",
         "department":  "Computer Science",
