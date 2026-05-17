@@ -1314,7 +1314,10 @@ function VaultFooter() {
     <footer className="relative z-10 w-full py-12 px-6 md:px-12 bg-[#07151c] border-t border-[#879393]/10">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="text-lg font-headline text-[#8ceff4] opacity-60">THE VAULT</div>
-        <p className="text-[10px] uppercase tracking-[0.2em] text-[#b2cbcd] text-center md:text-right">Cinematic Archive. All memories reserved.</p>
+        <div className="flex flex-col items-center md:items-end">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#b2cbcd] text-center md:text-right">Cinematic Archive. All memories reserved.</p>
+          <p className="text-[11px] text-[#b2cbcd] opacity-80 mt-2 text-center md:text-right">© 2026 Batch Legacy - Computer Science (CS) Department, Government Arts and Science College, Tirupattur.</p>
+        </div>
       </div>
     </footer>
   );
